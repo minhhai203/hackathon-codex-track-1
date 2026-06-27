@@ -3,8 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "node ../../scripts/supabase-db-sync.mjs",
     "dev": "next dev",
     "build": "next build",
+    "prestart": "node ../../scripts/supabase-db-sync.mjs",
     "start": "next start",
     "lint": "tsc --noEmit"
   },
