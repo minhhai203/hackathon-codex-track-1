@@ -54,6 +54,36 @@ The target stack for this project is a small monorepo built around `Next.js`, `S
 | Code quality | `ruff` | Fast linting and formatting for the Python side |
 | Local dev | `Docker` / `docker compose` | Reproducible startup for the hackathon team |
 
+## Codex Skills
+
+Teammates can install the same Codex skill pack from `vudovn/ag-kit` with:
+
+```bash
+tmpdir=$(mktemp -d)
+git clone --depth 1 https://github.com/vudovn/ag-kit "$tmpdir"
+TMPDIR="$tmpdir" python3 - <<'PY'
+import os
+import subprocess
+from pathlib import Path
+
+repo = Path(os.environ["TMPDIR"])
+paths = [str(p.parent.relative_to(repo)) for p in sorted(repo.glob(".agents/skills/**/SKILL.md"))]
+subprocess.run(
+    [
+        "python3",
+        f"{os.environ.get('CODEX_HOME', os.path.expanduser('~/.codex'))}/skills/.system/skill-installer/scripts/install-skill-from-github.py",
+        "--repo",
+        "vudovn/ag-kit",
+        "--path",
+        *paths,
+    ],
+    check=True,
+)
+PY
+```
+
+Restart Codex after the install so the new skills are loaded.
+
 ## Responsibility Split
 
 - `apps/web`: user-facing workflow, auth/session handling, and presentation layer
