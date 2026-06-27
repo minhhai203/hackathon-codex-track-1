@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { GameScreen } from "@/components/game/GameScreen";
 import {
   LearnerScreen,
   ManagerScreen,
@@ -214,6 +215,7 @@ export default function Home() {
           )}
           {section === "progress" && <ProgressScreen progress={progress} />}
           {section === "manager" && <ManagerScreen manager={manager} />}
+          {section === "game" && <GameScreen />}
         </section>
       </section>
     </main>

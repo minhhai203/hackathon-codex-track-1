@@ -1,6 +1,6 @@
 import type { FormEvent } from "react";
 
-export type Section = "learn" | "player" | "tutor" | "progress" | "manager";
+export type Section = "learn" | "player" | "tutor" | "progress" | "manager" | "game";
 
 export type Module = {
   module_id: string;

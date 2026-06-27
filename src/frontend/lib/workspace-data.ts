@@ -5,7 +5,8 @@ export const sectionLinks: Array<[Section, string]> = [
   ["player", "Bài học"],
   ["tutor", "Trợ lý"],
   ["progress", "Tiến bộ"],
-  ["manager", "Quản lý"]
+  ["manager", "Quản lý"],
+  ["game", "Game"]
 ];
 
 export const sectionIds = sectionLinks.map(([id]) => id);
@@ -30,6 +31,10 @@ export const sectionMeta: Record<Section, { title: string; description: string }
   manager: {
     title: "Dashboard quản lý",
     description: "Theo dõi phòng ban, học viên cần hỗ trợ và tín hiệu vận hành."
+  },
+  game: {
+    title: "Trò chơi học tập",
+    description: "Trò chơi giải đố kết hợp rèn luyện và kiểm tra kiến thức về AI."
   }
 };
 

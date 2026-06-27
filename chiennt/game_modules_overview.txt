@@ -1,0 +1,10 @@
+1. Tôi đang phát triển một modules về game cho dự án hiện tại.
+2. Đây sẽ là game được tổ chức vào thứ 2 đầu tuần để gia tăng gắn kết.
+3. Game có dạng quizizz, có thể setup 10-15 câu trong 1 lần chơi, chủ đề
+giới hạn trong chủ đề AI.
+4. Sau khi kết thúc thì thông báo popup ai là người chiến thắng cuối cùng.
+5. Mỗi thành viên kiếm được bao nhiêu điểm sẽ được đưa vào một bảng xếp hạng tổng.
+(Có cho phép lọc thành viên theo phòng ban dạy học)
+
+Các đầu việc ưu tiên cần làm:
+1. Xây dựng design-note về modules này. Liên quan kỹ thuật sử dụng để khớp
