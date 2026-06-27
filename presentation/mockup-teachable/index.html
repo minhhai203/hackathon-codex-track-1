@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Trợ Lý Doanh Nghiệp — mockup v4 (phong cách Teachable)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Lora:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.24.0/dist/tabler-icons.min.css">
+<style>
+:root{
+  --brand:#0FA98E; --brand-dark:#0B8472; --brand-700:#0A6152; --brand-soft:#E2F5F1; --brand-line:#BFE7DF;
+  --ok:#0FA98E; --ok-soft:#E2F5F1; --ok-700:#0A6152;
+  --bg:#F7F8F8; --card:#FFFFFF; --line:#EAEBEB; --line2:#DEE0E0;
+  --ink:#19211F; --muted:#5F6B68; --faint:#9AA3A0;
+  --r:8px; --r-lg:14px;
+  --font:"Be Vietnam Pro",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --disp:"Lora",Georgia,serif;
+  --sh-sm:0 1px 2px rgba(20,30,28,.05);
+  --sh:0 1px 2px rgba(20,30,28,.04),0 2px 8px rgba(20,30,28,.05);
+  --sh-md:0 6px 22px rgba(20,30,28,.08);
+  --t:.16s ease;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer}
+a{color:var(--brand-700);text-decoration:none}
+h1,h2,h3{margin:0;font-weight:600}
+.disp{font-family:var(--disp);font-weight:600;letter-spacing:-.01em}
+.proto-bar{position:sticky;top:0;z-index:80;display:flex;gap:6px;flex-wrap:wrap;align-items:center;background:rgba(255,255,255,.93);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:9px 16px}
+.proto-bar b{font-size:12.5px;color:var(--faint);margin-right:4px}
+.proto-bar button{font-size:12.5px;padding:6px 12px;border:1px solid var(--line2);background:#fff;border-radius:20px;color:var(--ink);transition:var(--t)}
+.proto-bar button:hover{border-color:var(--brand);color:var(--brand-700)}
+.proto-bar button.active{background:var(--brand);border-color:var(--brand);color:#fff}
+.screen{display:none}.screen.on{display:block}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:46px;border:none;border-radius:var(--r);background:var(--brand);color:#fff;font-size:15px;font-weight:600;padding:0 20px;transition:var(--t)}
+.btn:hover{background:var(--brand-dark)}
+.btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line2)}
+.btn.ghost:hover{border-color:var(--brand);color:var(--brand-700)}
+.btn.dark{background:var(--ink)}.btn.dark:hover{background:#000}
+.btn.sm{height:38px;font-size:14px;padding:0 16px}
+.btn.block{width:100%}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;padding:4px 11px;border-radius:6px;line-height:1.5}
+.pill.brand{background:var(--brand-soft);color:var(--brand-700)}
+.pill.ok{background:var(--ok-soft);color:var(--ok-700)}
+.pill.mute{background:#EEF0F0;color:var(--muted)}
+.pill.warn{background:#FBEEDF;color:#9A5B11}
+.muted{color:var(--muted)}
+.center{min-height:84vh;display:flex;align-items:center;justify-content:center;padding:30px}
+.auth{width:420px;max-width:100%;background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:34px;box-shadow:var(--sh-md)}
+.logo{display:flex;align-items:center;gap:9px;font-weight:700;font-size:16px}
+.logo .mk{width:32px;height:32px;border-radius:9px;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px}
+label{display:block;font-size:13px;color:var(--muted);margin:15px 0 6px;font-weight:500}
+.inp{width:100%;height:44px;border:1px solid var(--line2);border-radius:var(--r);padding:0 13px;font-size:15px;background:#fff;font-family:inherit;transition:var(--t)}
+.inp:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+textarea.inp{height:auto;padding:11px 13px}
+.bar{height:8px;border-radius:20px;background:#E9EBEB;overflow:hidden}
+.bar>span{display:block;height:100%;background:var(--brand);border-radius:20px}
+/* landing */
+.topnav{position:sticky;top:43px;z-index:40;display:flex;align-items:center;justify-content:space-between;padding:14px 44px;background:rgba(247,248,248,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.topnav .links{display:flex;gap:26px;font-size:14.5px}
+.topnav .links a{color:var(--muted);font-weight:500}
+.topnav .links a:hover{color:var(--ink)}
+.land{max-width:1080px;margin:0 auto;padding:0 28px 20px}
+.hero{text-align:center;padding:60px 0 34px;max-width:780px;margin:0 auto}
+.hero h1{font-size:46px;line-height:1.12;margin:18px 0}
+.hero p.lead{font-size:18px;color:var(--muted);margin:0 0 26px;line-height:1.6}
+.row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.section{padding:22px 0}
+.section h2{font-size:30px;text-align:center;margin:6px 0 8px}
+.section p.s{text-align:center;color:var(--muted);max-width:580px;margin:0 auto 28px}
+.courses{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.cc{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh);transition:var(--t);cursor:pointer}
+.cc:hover{box-shadow:var(--sh-md);transform:translateY(-3px)}
+.cc .thumb{height:96px;display:flex;align-items:center;justify-content:center;font-size:30px;color:#fff}
+.cc .body{padding:15px 16px 18px}
+.cc .t{font-weight:600;font-size:15px}
+.cc .d{font-size:13px;color:var(--muted);margin:5px 0 10px;line-height:1.5;min-height:38px}
+.cc .meta{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--faint)}
+.stats{display:flex;justify-content:center;gap:64px;padding:34px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);flex-wrap:wrap;margin:16px 0}
+.stats .v{font-size:34px;color:var(--brand);font-family:var(--disp)}
+.stats .k{font-size:13px;color:var(--muted);text-align:center}
+.ctaband{background:var(--ink);border-radius:18px;padding:46px;text-align:center;margin:54px 0 24px;color:#fff}
+.ctaband h2{color:#fff}.ctaband p{color:rgba(255,255,255,.78);margin:8px 0 20px}
+.foot{border-top:1px solid var(--line);margin-top:24px}
+.footin{max-width:1080px;margin:0 auto;padding:40px 28px;display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:30px}
+.footin h4{font-size:13px;color:var(--faint);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin:0 0 12px}
+.footin a{display:block;color:var(--muted);font-size:14px;margin-bottom:9px}
+.footbot{text-align:center;color:var(--faint);font-size:13px;padding:18px;border-top:1px solid var(--line)}
+/* app shell */
+.shell{display:flex;min-height:92vh}
+.side{width:248px;flex:none;background:#fff;border-right:1px solid var(--line);padding:22px 16px;display:flex;flex-direction:column;gap:4px}
+.side .slab{font-size:11.5px;color:var(--faint);font-weight:600;text-transform:uppercase;letter-spacing:.04em;padding:14px 12px 6px}
+.side .nav{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:var(--r);color:var(--muted);font-size:15px;font-weight:500;cursor:pointer;transition:var(--t)}
+.side .nav i{font-size:20px}
+.side .nav.active{background:var(--brand-soft);color:var(--brand-700)}
+.side .nav:hover:not(.active){background:#F2F4F4}
+.side .user{margin-top:auto;display:flex;align-items:center;gap:10px;padding-top:14px;border-top:1px solid var(--line)}
+.ava{width:36px;height:36px;border-radius:50%;background:var(--brand-soft);color:var(--brand-700);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;flex:none}
+.main{flex:1;min-width:0;padding:28px 38px}
+.h1{font-size:24px;margin:0 0 5px}
+.sub{color:var(--muted);font-size:14.5px;margin:0 0 22px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;box-shadow:var(--sh)}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.metric{background:#fff;border:1px solid var(--line);border-radius:12px;padding:17px;box-shadow:var(--sh)}
+.metric .k{font-size:13px;color:var(--muted)}.metric .v{font-size:28px;font-weight:600;margin-top:4px}
+.toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+/* course player */
+.player{display:flex;flex-direction:column;height:100vh}
+.ptop{display:flex;align-items:center;justify-content:space-between;padding:0 22px;height:60px;border-bottom:1px solid var(--line);background:#fff;flex:none}
+.ptop .pgs{display:flex;align-items:center;gap:12px;font-size:13px;color:var(--muted)}
+.pwrap{display:flex;flex:1;min-height:0}
+.curric{width:330px;flex:none;border-right:1px solid var(--line);background:#fff;overflow:auto}
+.curtop{padding:18px;border-bottom:1px solid var(--line)}
+.csec{font-size:12px;font-weight:600;color:var(--faint);text-transform:uppercase;letter-spacing:.03em;padding:16px 18px 6px}
+.crow{display:flex;align-items:center;gap:12px;padding:11px 18px;font-size:14px;color:var(--ink);cursor:pointer;border-left:3px solid transparent}
+.crow:hover{background:#F6F8F8}
+.crow.cur{background:var(--brand-soft);border-left-color:var(--brand);color:var(--brand-700);font-weight:500}
+.crow.lock{color:var(--faint)}
+.cco{width:22px;height:22px;border-radius:50%;border:2px solid var(--line2);display:flex;align-items:center;justify-content:center;font-size:13px;flex:none}
+.crow.done .cco{background:var(--brand);border-color:var(--brand);color:#fff}
+.crow.cur .cco{border-color:var(--brand);color:var(--brand)}
+.pcontent{flex:1;min-width:0;overflow:auto;display:flex;flex-direction:column}
+.pbody{flex:1;padding:30px 44px;max-width:820px}
+.video{aspect-ratio:16/9;background:#10201C;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;margin-bottom:24px}
+.video .pl{width:62px;height:62px;border-radius:50%;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;font-size:28px}
+.pbar{display:flex;align-items:center;justify-content:space-between;padding:14px 44px;border-top:1px solid var(--line);background:#fff;flex:none}
+/* tables */
+.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:var(--sh)}
+.tbl th{text-align:left;font-size:12px;color:var(--muted);font-weight:600;padding:12px 15px;background:#F6F8F8;border-bottom:1px solid var(--line)}
+.tbl td{font-size:14px;padding:12px 15px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}.tbl tbody tr:hover{background:#FAFBFB}
+.minibar{height:7px;width:84px;border-radius:20px;background:#E9EBEB;display:inline-block;vertical-align:middle;overflow:hidden;margin-right:8px}
+.minibar>span{display:block;height:100%;background:var(--brand)}
+.deptico{width:32px;height:32px;border-radius:9px;background:var(--brand-soft);color:var(--brand);display:inline-flex;align-items:center;justify-content:center;font-size:16px;vertical-align:middle;margin-right:10px}
+.catrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.cattag{display:inline-flex;align-items:center;gap:7px;font-size:13px;padding:8px 13px;border:1px solid var(--line2);border-radius:8px;background:#fff}
+.chip{display:inline-block;font-size:13px;padding:8px 14px;border:1px solid var(--line2);border-radius:8px;background:#fff;margin:0 6px 8px 0;cursor:pointer;transition:var(--t)}
+.chip.sel{background:var(--brand-soft);border-color:var(--brand);color:var(--brand-700);font-weight:500}
+.dot{width:12px;height:12px;border-radius:50%}
+.msg{max-width:78%;padding:12px 15px;border-radius:14px;font-size:14.5px;line-height:1.55;margin-bottom:12px}
+.msg.ai{background:#fff;border:1px solid var(--line);border-bottom-left-radius:5px}
+.msg.me{background:var(--brand);color:#fff;margin-left:auto;border-bottom-right-radius:5px}
+.tab{display:none}.tab.on{display:block}
+@media(max-width:920px){
+  .hero h1{font-size:34px}.courses{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:repeat(2,1fr)}
+  .stats{gap:34px}.footin{grid-template-columns:1fr 1fr}.topnav .links{display:none}
+  .shell{flex-direction:column}.side{width:auto;flex-direction:row;overflow-x:auto;border-right:none;border-bottom:1px solid var(--line);gap:6px;padding:12px}
+  .side .slab,.side .user{display:none}.side .nav{white-space:nowrap}.main{padding:22px 18px}
+  .land{padding:0 18px 20px}.topnav{padding:14px 18px}
+  .player{height:auto}.pwrap{flex-direction:column}.curric{width:auto;border-right:none;border-bottom:1px solid var(--line)}.pbody{padding:22px 18px}.pbar{padding:14px 18px}
+}
+@media(max-width:560px){.courses{grid-template-columns:1fr}.grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<div class="proto-bar">
+  <b>Prototype · chọn màn:</b>
+  <button data-go="home" class="active">Trang chủ</button>
+  <button data-go="register">Đăng ký</button>
+  <button data-go="onboarding">Onboarding</button>
+  <button data-go="khoacuatoi">Khoá của tôi</button>
+  <button data-go="hocbai">Học bài (player)</button>
+  <button data-go="troly">Trợ lý AI</button>
+  <button data-go="tienbo">Tiến bộ</button>
+  <button data-go="nangcap">Nâng cấp</button>
+  <button data-go="adm_tongquan">DN · Tổng quan</button>
+  <button data-go="adm_phongban">DN · Phòng ban</button>
+  <button data-go="adm_hocvien">DN · Học viên</button>
+</div>
+
+<!-- TRANG CHỦ -->
+<section class="screen on" id="home">
+  <div class="topnav">
+    <div class="logo"><span class="mk"><i class="ti ti-sparkles"></i></span> AI Trợ Lý Doanh Nghiệp</div>
+    <div class="links"><a href="#courses">Module</a><a href="#" onclick="show('adm_tongquan');return false">Cho doanh nghiệp</a><a href="#" onclick="show('register');return false">Đăng nhập</a></div>
+    <button class="btn sm" onclick="show('register')">Học thử miễn phí</button>
+  </div>
+  <div class="land">
+    <div class="hero">
+      <span class="pill brand"><i class="ti ti-building-skyscraper"></i> Đào tạo AI cho doanh nghiệp SME</span>
+      <h1 class="disp">Khoá học AI cho từng phòng ban của công ty bạn</h1>
+      <p class="lead">Nhân sự, kinh doanh, marketing, kế toán… mỗi phòng một khoá riêng, đi từ cơ bản tới Agent tự động. Học bằng việc thật, có trợ lý AI kèm bên.</p>
+      <div class="row"><button class="btn" onclick="show('register')">Học thử miễn phí</button><button class="btn ghost" onclick="show('adm_tongquan')">Giải pháp doanh nghiệp</button></div>
+    </div>
+
+    <div class="section" id="courses">
+      <h2 class="disp">Chọn khoá theo phòng ban</h2>
+      <p class="s">Mỗi khoá là một lộ trình 5 cấp độ: L1 nhập môn → L5 Agent tự động hoá.</p>
+      <div class="courses" id="landingCourses">
+        <div class="cc" onclick="show('khoacuatoi')"><div class="thumb" style="background:#0FA98E"><i class="ti ti-users"></i></div><div class="body"><div class="t">AI cho Nhân sự</div><div class="d">Tuyển dụng, chấm công, lương, đào tạo, chính sách.</div><div class="meta"><span>84 bài · L1–L5</span><span class="pill brand">Đã mở</span></div></div></div>
+        <div class="cc"><div class="thumb" style="background:#127C9C"><i class="ti ti-businessplan"></i></div><div class="body"><div class="t">AI cho Kinh doanh</div><div class="d">Tìm khách, kịch bản bán, báo giá, chăm sóc.</div><div class="meta"><span>L1–L5</span><span class="pill mute">Sắp mở</span></div></div></div>
+        <div class="cc"><div class="thumb" style="background:#9A5BB8"><i class="ti ti-speakerphone"></i></div><div class="body"><div class="t">AI cho Marketing</div><div class="d">Content, kế hoạch, quảng cáo, phân tích.</div><div class="meta"><span>L1–L5</span><span class="pill mute">Sắp mở</span></div></div></div>
+        <div class="cc"><div class="thumb" style="background:#C77D2E"><i class="ti ti-calculator"></i></div><div class="body"><div class="t">AI cho Kế toán</div><div class="d">Hoá đơn, đối soát, báo cáo, Excel.</div><div class="meta"><span>L1–L5</span><span class="pill mute">Sắp mở</span></div></div></div>
+        <div class="cc"><div class="thumb" style="background:#3C7A57"><i class="ti ti-package"></i></div><div class="body"><div class="t">AI cho Vận hành</div><div class="d">SOP, tồn kho, điều phối, theo dõi đơn.</div><div class="meta"><span>L1–L5</span><span class="pill mute">Sắp mở</span></div></div></div>
+        <div class="cc"><div class="thumb" style="background:#B8556B"><i class="ti ti-headset"></i></div><div class="body"><div class="t">AI cho CSKH</div><div class="d">Trả lời nhanh, kịch bản, tổng hợp phản hồi.</div><div class="meta"><span>L1–L5</span><span class="pill mute">Sắp mở</span></div></div></div>
+        <div class="cc"><div class="thumb" style="background:#2E3A45"><i class="ti ti-briefcase"></i></div><div class="body"><div class="t">AI cho Chủ DN</div><div class="d">Doanh nghiệp một người nhờ AI, ra quyết định.</div><div class="meta"><span>L1–L5</span><span class="pill mute">Sắp mở</span></div></div></div>
+        <div class="cc"><div class="thumb" style="background:#5F6B68"><i class="ti ti-stack-2"></i></div><div class="body"><div class="t">Nền tảng AI chung</div><div class="d">Bài nền mọi phòng học trước.</div><div class="meta"><span>L1</span><span class="pill ok">Bắt buộc</span></div></div></div>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div style="text-align:center"><div class="v">7</div><div class="k">khoá theo phòng ban</div></div>
+      <div style="text-align:center"><div class="v">5</div><div class="k">cấp độ mỗi khoá</div></div>
+      <div style="text-align:center"><div class="v">AI</div><div class="k">chấm bài tự động</div></div>
+      <div style="text-align:center"><div class="v">1</div><div class="k">đồ án / phòng ban</div></div>
+    </div>
+
+    <div class="ctaband">
+      <h2 class="disp">Xây học viện AI nội bộ cho công ty bạn</h2>
+      <p>Gán khoá cho từng phòng ban, cấp ghế, theo dõi tiến độ cả doanh nghiệp ở một nơi.</p>
+      <button class="btn" style="background:var(--brand)" onclick="show('adm_tongquan')">Xem trang quản lý doanh nghiệp</button>
+    </div>
+  </div>
+  <div class="foot">
+    <div class="footin">
+      <div><div class="logo" style="margin-bottom:10px"><span class="mk"><i class="ti ti-sparkles"></i></span> AI Trợ Lý DN</div><p class="muted" style="font-size:14px;margin:0">Đào tạo ứng dụng AI cho doanh nghiệp SME — mỗi phòng ban một khoá.</p></div>
+      <div><h4>Sản phẩm</h4><a href="#courses">Khoá theo phòng</a><a href="#" onclick="show('adm_tongquan');return false">Cho doanh nghiệp</a></div>
+      <div><h4>Khoá</h4><a href="#">AI cho Nhân sự</a><a href="#">AI cho Kinh doanh</a><a href="#">AI cho Chủ DN</a></div>
+      <div><h4>Liên hệ</h4><a href="#">lucasnguyen.vn</a><a href="#">Đăng ký tư vấn</a></div>
+    </div>
+    <div class="footbot">© 2026 AI Trợ Lý Doanh Nghiệp · một sản phẩm của Lucas Nguyen</div>
+  </div>
+</section>
+
+<!-- ĐĂNG KÝ -->
+<section class="screen" id="register">
+  <div class="center">
+    <div class="auth" style="width:400px;text-align:center">
+      <div class="logo" style="justify-content:center"><span class="mk"><i class="ti ti-sparkles"></i></span> AI Trợ Lý DN</div>
+      <h2 class="disp" style="font-size:24px;margin:20px 0 4px">Bắt đầu học AI cho công việc</h2>
+      <p class="muted" style="font-size:14px;margin:0 0 6px">Tạo tài khoản miễn phí trong 1 phút.</p>
+      <div style="text-align:left">
+        <label>Họ và tên</label><input class="inp" placeholder="Nguyễn Thị An">
+        <label>Công ty</label><input class="inp" placeholder="Nội thất Mộc An">
+        <label>Email công việc</label><input class="inp" placeholder="an.nguyen@mocan.vn">
+        <label>Mật khẩu</label><input class="inp" type="password" placeholder="Ít nhất 8 ký tự">
+      </div>
+      <button class="btn dark block" style="margin-top:22px" onclick="show('onboarding')">Tạo tài khoản</button>
+      <p style="font-size:14px;margin:16px 0 0" class="muted">Đã có tài khoản? <a href="#">Đăng nhập</a></p>
+    </div>
+  </div>
+</section>
+
+<!-- ONBOARDING -->
+<section class="screen" id="onboarding">
+  <div class="center">
+    <div class="auth">
+      <div style="display:flex;gap:6px;margin-bottom:22px"><div class="bar" style="flex:1"><span style="width:50%"></span></div><div class="bar" style="flex:1"></div><div class="bar" style="flex:1"></div><div class="bar" style="flex:1"></div><div class="bar" style="flex:1"></div></div>
+      <p class="muted" style="font-size:13px;margin:0 0 2px;font-weight:500">Bước 1 / 5 · Phòng ban</p>
+      <h2 class="disp" style="font-size:23px;margin:0 0 4px">Bạn thuộc phòng ban nào?</h2>
+      <p class="muted" style="font-size:14px;margin:0 0 16px">Chúng tôi sẽ ghi danh bạn vào đúng khoá của phòng.</p>
+      <div id="onbRoles"></div>
+      <label>Mình nên gọi bạn là gì?</label><input class="inp" value="Chị An">
+      <div style="display:flex;gap:10px;margin-top:24px"><button class="btn ghost" style="flex:none" onclick="show('register')">Quay lại</button><button class="btn block" onclick="enrollSelected()">Tiếp tục</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- HỌC VIÊN SHELL -->
+<section class="screen" id="hv_shell">
+  <div class="shell">
+    <aside class="side">
+      <div class="logo" style="padding:4px 10px 8px"><span class="mk"><i class="ti ti-sparkles"></i></span> AI Trợ Lý DN</div>
+      <div class="slab">Học viên</div>
+      <a class="nav active" data-tab="khoacuatoi"><i class="ti ti-books"></i> Khoá của tôi</a>
+      <a class="nav" data-tab="troly"><i class="ti ti-message-chatbot"></i> Trợ lý AI</a>
+      <a class="nav" data-tab="tienbo"><i class="ti ti-chart-bar"></i> Tiến bộ</a>
+      <a class="nav" data-tab="nangcap"><i class="ti ti-rocket"></i> Nâng cấp</a>
+      <div class="user"><div class="ava">AN</div><div><div style="font-size:14px;font-weight:500">Chị An</div><div style="font-size:12px;color:var(--faint)">Phòng Nhân sự</div></div></div>
+    </aside>
+    <main class="main">
+      <div class="tab on" data-pane="khoacuatoi">
+        <h1 class="h1 disp">Khoá của tôi</h1><p class="sub">Khoá được công ty ghi danh theo phòng ban của bạn.</p>
+        <div class="courses" id="myCourses" style="grid-template-columns:repeat(3,1fr)">
+          <div class="cc" onclick="show('hocbai')"><div class="thumb" style="background:#0FA98E"><i class="ti ti-users"></i></div><div class="body"><div class="t">AI cho Nhân sự</div><div class="d">Phòng Nhân sự · cấp độ 3/5</div><div class="bar" style="margin:4px 0 8px"><span style="width:38%"></span></div><div class="meta"><span>32/84 bài</span><span class="pill brand">Tiếp tục học</span></div></div></div>
+          <div class="cc" onclick="show('hocbai')"><div class="thumb" style="background:#5F6B68"><i class="ti ti-stack-2"></i></div><div class="body"><div class="t">Nền tảng AI chung</div><div class="d">Bài nền · bắt buộc</div><div class="bar" style="margin:4px 0 8px"><span style="width:100%"></span></div><div class="meta"><span>Hoàn thành</span><span class="pill ok">Xong</span></div></div></div>
+        </div>
+      </div>
+
+      <div class="tab" data-pane="troly">
+        <h1 class="h1 disp">Trợ lý AI</h1><p class="sub">Đã nạp khoá Nhân sự và bối cảnh công ty bạn.</p>
+        <div class="card" style="padding:20px">
+          <div id="trolyThread">
+            <div class="msg ai" id="trolyGreeting">Chào bạn. Em là trợ lý AI của khoá học. Bạn cần gì?</div>
+          </div>
+          <p class="muted" style="font-size:12.5px;margin:12px 0 4px"><i class="ti ti-info-circle"></i> Gợi ý từ Starter Kit của vai trò (bản demo — chưa nối AI thật)</p>
+          <div style="margin:4px 0 6px" id="trolyChips"></div>
+          <div style="display:flex;gap:10px;margin-top:8px"><input class="inp" placeholder="Nhập câu hỏi cho trợ lý…" style="flex:1"><button class="btn" style="padding:0 16px"><i class="ti ti-send"></i></button></div>
+        </div>
+      </div>
+
+      <div class="tab" data-pane="tienbo">
+        <h1 class="h1 disp">Tiến bộ của bạn</h1><p class="sub">Khoá AI cho Nhân sự · cập nhật theo thời gian thực.</p>
+        <div class="grid"><div class="metric"><div class="k">Tổng giờ học</div><div class="v">12.5h</div></div><div class="metric"><div class="k">Hoàn thành</div><div class="v">38%</div></div><div class="metric"><div class="k">Điểm trung bình</div><div class="v">82</div></div><div class="metric"><div class="k">Cấp độ</div><div class="v">3 / 5</div></div></div>
+        <p class="muted" style="font-size:13px;margin:24px 0 10px;font-weight:500">Tiến độ theo chương</p>
+        <div style="display:flex;flex-direction:column;gap:13px;max-width:560px">
+          <div><div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:5px"><span>Cấp 1 · Nhập môn</span><span class="muted">100%</span></div><div class="bar"><span style="width:100%"></span></div></div>
+          <div><div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:5px"><span>Cấp 2 · Trung cấp</span><span class="muted">45%</span></div><div class="bar"><span style="width:45%"></span></div></div>
+          <div><div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:5px"><span>Cấp 3 · Nâng cao</span><span class="muted">10%</span></div><div class="bar"><span style="width:10%"></span></div></div>
+        </div>
+      </div>
+
+      <div class="tab" data-pane="nangcap">
+        <div style="max-width:470px;margin:12px auto;text-align:center;background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);padding:30px;box-shadow:var(--sh-md)">
+          <div style="width:52px;height:52px;border-radius:14px;background:var(--brand-soft);color:var(--brand);display:flex;align-items:center;justify-content:center;font-size:27px;margin:0 auto 16px"><i class="ti ti-rocket"></i></div>
+          <h2 class="disp" style="font-size:22px;margin:0 0 4px">Bạn đã học hết 6 bài miễn phí</h2>
+          <p class="muted" style="font-size:14px;margin:0 0 18px">Mở khoá toàn bộ khoá Nhân sự (84 bài, L1–L5).</p>
+          <button class="btn block">Liên hệ mở quyền học</button>
+          <p class="muted" style="font-size:13px;margin:14px 0 0">Công ty bạn đã mua gói? <a href="#">Nhập mã kích hoạt</a></p>
+        </div>
+      </div>
+    </main>
+  </div>
+</section>
+
+<!-- HỌC BÀI: COURSE PLAYER (Teachable style) -->
+<section class="screen" id="hocbai">
+  <div class="player">
+    <div class="ptop">
+      <div style="display:flex;align-items:center;gap:14px"><a href="#" onclick="show('khoacuatoi');return false" style="color:var(--muted)"><i class="ti ti-arrow-left"></i> Khoá của tôi</a><b style="font-weight:600" id="playerTitle">AI cho Nhân sự</b></div>
+      <div class="pgs" id="playerProgress"><span>0 / 0 bài</span><div class="bar" style="width:120px"><span style="width:0%"></span></div><span>0%</span></div>
+    </div>
+    <div class="pwrap">
+      <aside class="curric">
+        <div class="curtop"><div style="font-weight:600;font-size:14px">Nội dung khoá</div><div style="font-size:12.5px;color:var(--faint)" id="curricMeta">—</div></div>
+        <div id="curricList"></div>
+      </aside>
+      <div class="pcontent">
+        <div class="pbody" id="lessonBody">
+          <span class="pill brand">Cấp 1 · bài 3 / 84</span>
+          <h1 class="disp" style="font-size:26px;margin:12px 0 18px">m3 · Viết prompt cho công việc (Vai trò · Bối cảnh · Yêu cầu · Định dạng)</h1>
+          <div class="video"><div class="pl"><i class="ti ti-player-play"></i></div></div>
+          <p style="font-size:15.5px;line-height:1.7;color:#33403C">Bài này hướng dẫn bạn viết một prompt tốt theo 4 phần. Xem video, sau đó làm bài thực hành bên dưới — AI sẽ chấm và bạn cần đạt ≥ 60 điểm để mở bài tiếp theo.</p>
+          <div class="card" style="margin-top:18px">
+            <div style="font-weight:600;margin-bottom:6px">Bài thực hành — AI chấm (đạt khi ≥ 60)</div>
+            <p class="muted" style="font-size:14px;margin:0 0 12px">Viết 1 prompt theo cấu trúc 4 phần cho việc của phòng bạn, dán kết quả Claude trả về.</p>
+            <textarea class="inp" rows="3" placeholder="Dán kết quả của bạn vào đây"></textarea>
+            <div style="margin-top:12px;text-align:right"><button class="btn sm">Nộp và chấm</button></div>
+          </div>
+        </div>
+        <div class="pbar">
+          <button class="btn ghost sm"><i class="ti ti-arrow-left"></i> Bài trước</button>
+          <button class="btn sm"><i class="ti ti-check"></i> Hoàn thành và tiếp tục</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- QUẢN LÝ DOANH NGHIỆP SHELL -->
+<section class="screen" id="dn_shell">
+  <div class="shell">
+    <aside class="side">
+      <div class="logo" style="padding:4px 10px 6px"><span class="mk"><i class="ti ti-sparkles"></i></span> AI Trợ Lý DN</div>
+      <div class="slab">Học viện AI nội bộ</div>
+      <a class="nav active" data-tab="adm_tongquan"><i class="ti ti-layout-dashboard"></i> Tổng quan</a>
+      <a class="nav" data-tab="adm_phongban"><i class="ti ti-building"></i> Phòng ban và khoá</a>
+      <a class="nav" data-tab="adm_hocvien"><i class="ti ti-users"></i> Học viên</a>
+      <a class="nav"><i class="ti ti-receipt"></i> Ghế và thanh toán</a>
+      <div class="user"><div class="ava">MA</div><div><div style="font-size:14px;font-weight:500">Nội thất Mộc An</div><div style="font-size:12px;color:var(--faint)">Quản trị đào tạo</div></div></div>
+    </aside>
+    <main class="main">
+      <div class="tab on" data-pane="adm_tongquan">
+        <div class="toolbar"><div><h1 class="h1 disp">Tổng quan đào tạo</h1><p class="sub">Nội thất Mộc An · 6 phòng ban · 5 khoá đang triển khai</p></div><span class="pill brand"><i class="ti ti-armchair"></i> 39 / 50 ghế đã dùng</span></div>
+        <div class="grid" style="margin-top:6px"><div class="metric"><div class="k">Phòng ban</div><div class="v">6</div></div><div class="metric"><div class="k">Học viên</div><div class="v">39</div></div><div class="metric"><div class="k">Khoá triển khai</div><div class="v">5</div></div><div class="metric"><div class="k">Hoàn thành TB</div><div class="v">41%</div></div></div>
+        <p class="muted" style="font-size:13px;margin:26px 0 12px;font-weight:500">Tiến độ theo phòng ban</p>
+        <div style="display:flex;flex-direction:column;gap:14px;max-width:580px">
+          <div><div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px"><span>Nhân sự · AI cho HR</span><span class="muted">58%</span></div><div class="bar"><span style="width:58%"></span></div></div>
+          <div><div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px"><span>Ban giám đốc · AI cho Chủ DN</span><span class="muted">70%</span></div><div class="bar"><span style="width:70%"></span></div></div>
+          <div><div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px"><span>Marketing · AI cho Marketing</span><span class="muted">40%</span></div><div class="bar"><span style="width:40%"></span></div></div>
+          <div><div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px"><span>Kinh doanh · AI cho Sales</span><span class="muted">33%</span></div><div class="bar"><span style="width:33%"></span></div></div>
+          <div><div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px"><span>Kế toán · AI cho Kế toán</span><span class="muted">25%</span></div><div class="bar"><span style="width:25%"></span></div></div>
+          <div><div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px"><span>Kho / Vận hành · chưa gán khoá</span><span class="muted">0%</span></div><div class="bar"></div></div>
+        </div>
+      </div>
+      <div class="tab" data-pane="adm_phongban">
+        <div class="toolbar"><div><h1 class="h1 disp">Phòng ban và khoá</h1><p class="sub">Gán khoá phù hợp cho từng phòng, theo dõi tiến độ.</p></div><button class="btn sm"><i class="ti ti-plus"></i> Thêm phòng ban</button></div>
+        <table class="tbl" style="margin-top:8px">
+          <thead><tr><th>Phòng ban</th><th>Khoá đang học</th><th>Người</th><th>Tiến độ</th><th>Trạng thái</th><th></th></tr></thead>
+          <tbody>
+          <tr><td><span class="deptico"><i class="ti ti-users"></i></span>Nhân sự</td><td>AI cho HR</td><td>12</td><td><span class="minibar"><span style="width:58%"></span></span>58%</td><td><span class="pill ok">Đang học</span></td><td><a href="#">Quản lý</a></td></tr>
+          <tr><td><span class="deptico"><i class="ti ti-briefcase"></i></span>Ban giám đốc</td><td>AI cho Chủ DN</td><td>3</td><td><span class="minibar"><span style="width:70%"></span></span>70%</td><td><span class="pill ok">Đang học</span></td><td><a href="#">Quản lý</a></td></tr>
+          <tr><td><span class="deptico"><i class="ti ti-speakerphone"></i></span>Marketing</td><td>AI cho Marketing</td><td>6</td><td><span class="minibar"><span style="width:40%"></span></span>40%</td><td><span class="pill ok">Đang học</span></td><td><a href="#">Quản lý</a></td></tr>
+          <tr><td><span class="deptico"><i class="ti ti-businessplan"></i></span>Kinh doanh</td><td>AI cho Sales</td><td>8</td><td><span class="minibar"><span style="width:33%"></span></span>33%</td><td><span class="pill warn">Chậm tiến độ</span></td><td><a href="#">Quản lý</a></td></tr>
+          <tr><td><span class="deptico"><i class="ti ti-calculator"></i></span>Kế toán</td><td>AI cho Kế toán</td><td>4</td><td><span class="minibar"><span style="width:25%"></span></span>25%</td><td><span class="pill ok">Đang học</span></td><td><a href="#">Quản lý</a></td></tr>
+          <tr><td><span class="deptico"><i class="ti ti-package"></i></span>Kho / Vận hành</td><td class="muted">Chưa gán</td><td>6</td><td class="muted">—</td><td><span class="pill mute">Chờ gán khoá</span></td><td><a href="#" style="font-weight:600">Gán khoá</a></td></tr>
+          </tbody>
+        </table>
+        <p class="muted" style="font-size:13px;margin:24px 0 6px;font-weight:500">Khoá có thể gán</p>
+        <div class="catrow"><span class="cattag"><i class="ti ti-users" style="color:var(--brand)"></i> AI cho HR</span><span class="cattag"><i class="ti ti-businessplan" style="color:var(--brand)"></i> AI cho Sales</span><span class="cattag"><i class="ti ti-speakerphone" style="color:var(--brand)"></i> AI cho Marketing</span><span class="cattag"><i class="ti ti-calculator" style="color:var(--brand)"></i> AI cho Kế toán</span><span class="cattag"><i class="ti ti-package" style="color:var(--brand)"></i> AI cho Vận hành</span><span class="cattag"><i class="ti ti-headset" style="color:var(--brand)"></i> AI cho CSKH</span><span class="cattag"><i class="ti ti-briefcase" style="color:var(--brand)"></i> AI cho Chủ DN</span></div>
+      </div>
+      <div class="tab" data-pane="adm_hocvien">
+        <div class="toolbar"><div><h1 class="h1 disp">Học viên</h1><p class="sub">39 học viên · 6 phòng ban</p></div><button class="btn sm"><i class="ti ti-user-plus"></i> Mời học viên</button></div>
+        <div style="margin:10px 0 14px"><span class="chip sel">Tất cả</span><span class="chip">Nhân sự</span><span class="chip">Kinh doanh</span><span class="chip">Marketing</span><span class="chip">Kế toán</span><span class="chip">Kho</span></div>
+        <table class="tbl">
+          <thead><tr><th>Học viên</th><th>Phòng ban</th><th>Khoá</th><th>Cấp độ</th><th>Tiến độ</th><th>Hoạt động</th><th>Trạng thái</th></tr></thead>
+          <tbody>
+          <tr><td>Trần Thị Mai</td><td>Nhân sự</td><td>AI cho HR</td><td>Cấp 3</td><td><span class="minibar"><span style="width:62%"></span></span>62%</td><td class="muted">Hôm nay</td><td><span class="pill ok">Đang học</span></td></tr>
+          <tr><td>Nguyễn Thị An</td><td>Nhân sự</td><td>AI cho HR</td><td>Cấp 4</td><td><span class="minibar"><span style="width:80%"></span></span>80%</td><td class="muted">Hôm nay</td><td><span class="pill ok">Đang học</span></td></tr>
+          <tr><td>Đỗ Minh Quân</td><td>Ban giám đốc</td><td>AI cho Chủ DN</td><td>Cấp 5</td><td><span class="minibar"><span style="width:95%"></span></span>95%</td><td class="muted">Hôm nay</td><td><span class="pill ok">Sắp xong</span></td></tr>
+          <tr><td>Lê Văn Hùng</td><td>Kinh doanh</td><td>AI cho Sales</td><td>Cấp 2</td><td><span class="minibar"><span style="width:45%"></span></span>45%</td><td class="muted">Hôm qua</td><td><span class="pill ok">Đang học</span></td></tr>
+          <tr><td>Phạm Thu Hà</td><td>Kinh doanh</td><td>AI cho Sales</td><td>Cấp 1</td><td><span class="minibar"><span style="width:20%"></span></span>20%</td><td class="muted">3 ngày trước</td><td><span class="pill warn">Chậm tiến độ</span></td></tr>
+          <tr><td>Vũ Thị Lan</td><td>Kho / Vận hành</td><td class="muted">Chưa gán</td><td>—</td><td class="muted">—</td><td class="muted">—</td><td><span class="pill mute">Chưa bắt đầu</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+</section>
+
+<script src="data.js"></script>
+<script>
+var HV=['khoacuatoi','troly','tienbo','nangcap'];
+var DN=['adm_tongquan','adm_phongban','adm_hocvien'];
+function setActive(id){document.querySelectorAll('.proto-bar button').forEach(function(b){b.classList.toggle('active',b.dataset.go===id)})}
+function show(id){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('on')});
+  if(HV.indexOf(id)>=0){document.getElementById('hv_shell').classList.add('on');goPane(id,'hv');}
+  else if(DN.indexOf(id)>=0){document.getElementById('dn_shell').classList.add('on');goPane(id,'dn');}
+  else{document.getElementById(id).classList.add('on');setActive(id);}
+  window.scrollTo(0,0);
+}
+function goPane(p,which){
+  var root=which==='dn'?'#dn_shell':'#hv_shell';
+  document.querySelectorAll(root+' .tab').forEach(function(t){t.classList.toggle('on',t.dataset.pane===p)});
+  document.querySelectorAll(root+' .side .nav').forEach(function(n){n.classList.toggle('active',n.dataset.tab===p)});
+  setActive(p);
+}
+document.querySelectorAll('.proto-bar button').forEach(function(b){b.addEventListener('click',function(){show(b.dataset.go)})});
+document.querySelectorAll('.side .nav').forEach(function(n){n.addEventListener('click',function(){if(n.dataset.tab){var dn=DN.indexOf(n.dataset.tab)>=0;goPane(n.dataset.tab,dn?'dn':'hv')}})});
+document.querySelectorAll('.chip').forEach(function(c){c.addEventListener('click',function(){if(c.parentElement.querySelector('.chip.sel')){c.parentElement.querySelectorAll('.chip').forEach(function(s){s.classList.remove('sel')});c.classList.add('sel')}})});
+
+/* ===== Render động từ data.js (bài học thật của dự án) ===== */
+(function(){
+  var DATA = window.AITROLY_DATA || {roles:{}};
+  var ROLES = DATA.roles || {};
+  var LEVEL_LABEL = {1:'Cấp 1 · Nhập môn',2:'Cấp 2 · Trung cấp',3:'Cấp 3 · Nâng cao'};
+  var state = { roleId:'nhan-su', moduleId:null };
+  if(!ROLES[state.roleId]) state.roleId = Object.keys(ROLES)[0];
+
+  function esc(s){return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function roleList(){return Object.keys(ROLES).map(function(k){return ROLES[k];});}
+
+  function courseCard(r,onclick){
+    var n=r.modules.length;
+    return '<div class="cc" onclick="'+onclick+'">'
+      +'<div class="thumb" style="background:'+(r.color||'#0FA98E')+'">'+(r.icon||'🎓')+'</div>'
+      +'<div class="body"><div class="t">'+esc(r.label)+'</div>'
+      +'<div class="d">'+esc(r.shortLabel||'')+'</div>'
+      +'<div class="meta"><span>'+n+' bài · L1–L3</span><span class="pill brand">Mở khoá</span></div></div></div>';
+  }
+  function renderCourses(){
+    var lc=document.getElementById('landingCourses');
+    if(lc) lc.innerHTML=roleList().map(function(r){return courseCard(r,"openCourse('"+r.id+"')");}).join('');
+    var mc=document.getElementById('myCourses');
+    if(mc) mc.innerHTML=roleList().map(function(r){return courseCard(r,"openCourse('"+r.id+"')");}).join('');
+  }
+  function renderOnboarding(){
+    var el=document.getElementById('onbRoles'); if(!el) return;
+    el.innerHTML=roleList().map(function(r){return '<span class="chip'+(r.id===state.roleId?' sel':'')+'" data-role="'+r.id+'">'+esc(r.shortLabel||r.label)+'</span>';}).join('');
+    el.querySelectorAll('.chip').forEach(function(c){c.addEventListener('click',function(){state.roleId=c.dataset.role;el.querySelectorAll('.chip').forEach(function(s){s.classList.remove('sel');});c.classList.add('sel');});});
+  }
+  window.enrollSelected=function(){window.openCourse(state.roleId);};
+  window.openCourse=function(roleId){
+    if(roleId) state.roleId=roleId;
+    var role=ROLES[state.roleId];
+    state.moduleId=role.modules[0]?role.modules[0].id:null;
+    renderPlayer(); show('hocbai');
+  };
+  function renderPlayer(){
+    var role=ROLES[state.roleId]; if(!role) return;
+    document.getElementById('playerTitle').textContent='AI cho '+(role.shortLabel||role.label);
+    var n=role.modules.length;
+    document.getElementById('curricMeta').textContent=n+' bài';
+    var groups={};
+    role.modules.forEach(function(m){var lv=m.level||1;(groups[lv]=groups[lv]||[]).push(m);});
+    var html='';
+    [1,2,3].forEach(function(lv){if(!groups[lv])return;html+='<div class="csec">'+LEVEL_LABEL[lv]+'</div>';
+      groups[lv].forEach(function(m){var cur=m.id===state.moduleId;
+        html+='<div class="crow'+(cur?' cur':'')+'" data-mid="'+m.id+'"><span class="cco"><i class="ti ti-'+(cur?'player-play':'circle')+'"></i></span> '+esc(m.title)+'</div>';});});
+    var list=document.getElementById('curricList'); list.innerHTML=html;
+    list.querySelectorAll('.crow').forEach(function(r){r.addEventListener('click',function(){window.openLesson(r.dataset.mid);});});
+    var idx=role.modules.findIndex(function(m){return m.id===state.moduleId;});
+    var done=idx<0?0:idx, pct=n?Math.round(done/n*100):0;
+    document.getElementById('playerProgress').innerHTML='<span>'+done+' / '+n+' bài</span><div class="bar" style="width:120px"><span style="width:'+pct+'%"></span></div><span>'+pct+'%</span>';
+    renderLesson();
+  }
+  window.openLesson=function(mid){state.moduleId=mid;renderPlayer();window.scrollTo(0,0);};
+  function renderLesson(){
+    var role=ROLES[state.roleId];
+    var m=role.modules.find(function(x){return x.id===state.moduleId;})||role.modules[0]; if(!m) return;
+    var idx=role.modules.indexOf(m);
+    var learn=(m.learnings||[]).map(function(l){return '<li>'+esc(l)+'</li>';}).join('');
+    var prompt=m.practicePrompt?'<div class="card" style="margin-top:16px"><div style="font-weight:600;margin-bottom:6px">Prompt mẫu</div><pre style="white-space:pre-wrap;font-family:inherit;font-size:14px;margin:0;color:#33403C">'+esc(m.practicePrompt)+'</pre></div>':'';
+    var body=''
+      +'<span class="pill brand">'+LEVEL_LABEL[m.level||1]+' · bài '+(idx+1)+' / '+role.modules.length+'</span>'
+      +'<h1 class="disp" style="font-size:26px;margin:12px 0 16px">'+esc(m.title)+'</h1>'
+      +'<p style="font-size:15.5px;line-height:1.7;color:#33403C">'+esc(m.content)+'</p>'
+      +(learn?'<div class="card" style="margin-top:16px"><div style="font-weight:600;margin-bottom:6px">Bạn sẽ học được</div><ul style="margin:0;padding-left:20px;line-height:1.8">'+learn+'</ul></div>':'')
+      +prompt
+      +'<div style="font-size:13px;color:var(--faint);margin-top:14px">⏱ '+(m.durationMin||10)+' phút</div>';
+    document.getElementById('lessonBody').innerHTML=body;
+  }
+  function renderTroly(){
+    var role=ROLES[state.roleId];
+    var g=document.getElementById('trolyGreeting');
+    if(g) g.textContent='Chào bạn. Em là trợ lý AI khoá '+(role.shortLabel||role.label)+'. Bạn cần gì?';
+    var el=document.getElementById('trolyChips'); if(!el) return;
+    var prompts=(role.starterKit&&role.starterKit.prompts)||[];
+    el.innerHTML=prompts.map(function(p,i){return '<span class="chip" data-i="'+i+'">'+esc(p.title)+'</span>';}).join('');
+    el.querySelectorAll('.chip').forEach(function(c){c.addEventListener('click',function(){
+      var p=prompts[c.dataset.i]; var th=document.getElementById('trolyThread');
+      th.innerHTML+='<div class="msg me">'+esc(p.title)+'</div><div class="msg ai">'+esc(p.prompt)+'</div>';
+    });});
+  }
+  var _goPane=window.goPane;
+  window.goPane=function(p,which){_goPane(p,which); if(p==='troly') renderTroly();};
+
+  renderCourses(); renderOnboarding(); renderPlayer(); renderTroly();
+})();
+</script>
+</body>
+</html>
