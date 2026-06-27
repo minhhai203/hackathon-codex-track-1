@@ -2,7 +2,7 @@
 
 Starter repository for a working AI product prototype at the Codex Community Hackathon Hanoi.
 
-The target stack for this project is a small monorepo built around `Next.js`, `Supabase`, `LangGraph`, `LangChain`, and `RAGAS`. The goal is to keep the product easy to ship: a clear UI, a reliable data layer, a structured agent backend, and evaluation tooling that proves the retrieval quality instead of guessing.
+The target stack for this project is a small monorepo built around `Next.js`, `Supabase`, `Vercel`, `LangGraph`, `LangChain`, and `RAGAS`. The goal is to keep the product easy to ship: a clear UI, a reliable data layer, a structured agent backend, and evaluation tooling that proves the retrieval quality instead of guessing.
 
 ## Hackathon Focus
 
@@ -14,27 +14,21 @@ The target stack for this project is a small monorepo built around `Next.js`, `S
 
 ```text
 .
-├── apps/
-│   ├── web/              # Next.js app router frontend
-│   │   ├── app/          # Routes, layouts, server components
-│   │   ├── components/   # Shared UI components
-│   │   ├── features/     # Product-specific UI slices
-│   │   ├── lib/          # Client helpers, Supabase client, utils
-│   │   └── styles/       # Global styling and theme tokens
-│   └── agent/            # LangGraph + LangChain backend
-│       ├── src/
-│       │   ├── api/      # HTTP routes
-│       │   ├── agent/    # Graph, nodes, state, tools, prompts
-│       │   ├── rag/      # Retrieval, chunking, embeddings
-│       │   ├── eval/     # RAGAS evaluation helpers
-│       │   ├── services/ # LLM and external integrations
-│       │   └── main.py   # Backend entry point
-│       └── tests/        # Agent and API tests
+├── src/
+│   ├── frontend/         # Next.js app router frontend and Next API routes
+│   │   ├── app/          # Routes, layouts, server components, route handlers
+│   │   └── lib/          # Demo domain logic, Supabase client, utilities
+│   └── backend/          # LangGraph + LangChain backend skeleton
+│       ├── api/          # Optional HTTP routes for agent services
+│       ├── agents/       # Graph, nodes, state, tools, prompts
+│       ├── models/       # Pydantic schemas
+│       └── services/     # LLM and external integrations
 ├── supabase/             # Migrations, seed data, edge functions
 ├── packages/             # Shared utilities/types if frontend and backend need them
 ├── docs/                 # Architecture notes and product docs
 ├── eval/                 # RAGAS datasets, reports, benchmark outputs
 ├── presentation/         # Demo and pitch assets
+├── supabase/             # Core Postgres schema and RLS scaffolding
 ├── scripts/              # Local setup utilities
 ├── Dockerfile
 ├── docker-compose.yml
@@ -46,6 +40,7 @@ The target stack for this project is a small monorepo built around `Next.js`, `S
 | Layer | Technology | Why it fits |
 |-------|------------|-------------|
 | Frontend | `Next.js` | Fast product UI, server components, and easy deployment for demos |
+| Deployment | `Vercel` | Native Next.js hosting, previews, and production deployment |
 | Backend agent | `LangGraph` + `LangChain` | Clear orchestration, tools, retrieval, and stateful workflows |
 | Database/Auth/Storage | `Supabase` | Managed Postgres, auth, storage, and simple local-to-prod path |
 | Evaluation | `RAGAS` | Measures retrieval quality and keeps RAG work honest |
@@ -86,8 +81,8 @@ Restart Codex after the install so the new skills are loaded.
 
 ## Responsibility Split
 
-- `apps/web`: user-facing workflow, auth/session handling, and presentation layer
-- `apps/agent`: retrieval, tool use, routing logic, and agent responses
+- `src/frontend`: user-facing workflow, auth/session handling, and presentation layer
+- `src/backend`: retrieval, tool use, routing logic, and agent responses
 - `supabase`: source of truth for users, projects, uploads, and any structured product data
 - `eval`: RAGAS datasets and reports to validate retrieval quality before demo day
 
@@ -95,11 +90,23 @@ Restart Codex after the install so the new skills are loaded.
 
 - Core feature spec: `specs/core-feature-spec.md`
 - Delivery plan: `planning/core-feature-plan.md`
-- Source inspiration: `ai-tro-ly/.repomix/repomix-latest.xml`, adapted to this repo's Next.js + Supabase + LangGraph + LangChain + RAGAS stack.
+- Source inspiration: `ai-tro-ly/.repomix/repomix-latest.xml`, adapted to this repo's Next.js + Supabase + Vercel + LangGraph + LangChain + RAGAS stack.
 
 ## Current Backend Service
 
-The code already in this repo runs the backend agent skeleton. The monorepo layout above is the target structure for the Next.js + Supabase build-out.
+The Python code under `src/backend` is the LangGraph/LangChain backend skeleton. The current frontend demo does not call it directly; product-facing demo logic runs through Next.js API route handlers in `src/frontend/app/api`.
+
+## Current Frontend Prototype
+
+`src/frontend` now contains a Next.js App Router prototype for the SME AI learning platform UI. It is based on the provided Teachable-style mockup and maps the core product spine from `specs/core-feature-spec.md` into demoable screens:
+
+- onboarding assessment and learning-path recommendation
+- learner course dashboard and lesson player
+- AI tutor chat backed by the Next.js route handler `/api/v1/chat`
+- progress summary backed by `/api/v1/core/progress`
+- manager dashboard backed by `/api/v1/core/manager`
+
+The frontend uses same-origin Next.js API routes first. Those route handlers currently use deterministic demo logic in `src/frontend/lib/demo-core.ts`; Supabase becomes the source of truth when the F01/F02 data slices are implemented.
 
 ## Quick Start
 
@@ -117,28 +124,60 @@ Open the API docs at:
 http://localhost:8000/docs
 ```
 
-## API
-
-Health check:
+Run the web UI in another terminal:
 
 ```bash
-curl http://localhost:8000/health
+cd src/frontend
+npm install
+npm run dev
 ```
 
-Agent chat:
+Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` when wiring the UI to Supabase.
+
+## Next.js API
+
+The UI calls same-origin API routes served by Next.js:
 
 ```bash
-curl -X POST http://localhost:8000/api/v1/chat \
+curl -X POST http://localhost:3000/api/v1/chat \
   -H "Content-Type: application/json" \
-  -d '{"message":"Help me find a first customer and market adoption path"}'
+  -d '{"message":"Help me create a learning path for Marketing"}'
+
+curl http://localhost:3000/api/v1/core/capabilities
+
+curl -X POST http://localhost:3000/api/v1/core/assessment \
+  -H "Content-Type: application/json" \
+  -d '{"role_id":"marketing","department":"Marketing","employee_name":"An","current_work":"Planning campaign briefs","ai_tool_experience":4,"prompt_confidence":4,"safety_awareness":3,"daily_tasks":["Write briefs"],"goals":["faster content planning"],"preferred_address":"chi"}'
+
+curl -X POST http://localhost:3000/api/v1/core/learning-path \
+  -H "Content-Type: application/json" \
+  -d '{"role_id":"kinh-doanh","ai_level":2,"goals":["find first customer"],"completed_modules":["foundation-ai-safety"]}'
+
+curl -X POST http://localhost:3000/api/v1/core/progress \
+  -H "Content-Type: application/json" \
+  -d '{"employee_name":"Binh","role_id":"kinh-doanh","completed_modules":["foundation-ai-safety","foundation-prompt-basics"],"hours_saved":8,"recent_activity":["Completed notes"]}'
+
+curl -X POST http://localhost:3000/api/v1/core/manager \
+  -H "Content-Type: application/json" \
+  -d '{"organization_name":"Demo Org","team":[]}'
+
+curl "http://localhost:3000/api/v1/core/knowledge?query=RAG%20grounding"
 ```
 
-The current agent is deterministic and works without an API key. Add `OPENAI_API_KEY` in `.env` only when LLM-backed features are added.
+## Optional Python Agent API
+
+The Python agent skeleton can still run separately for future LangGraph work once its package path is settled:
+
+```bash
+make run
+```
 
 ## Development
 
 ```bash
 make lint
+make web-lint
+make web-build
 make test
 make check
 ```

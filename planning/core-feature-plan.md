@@ -21,10 +21,10 @@ Priority order:
 
 | Workstream | Owns | Main paths |
 |---|---|---|
-| `WS-A Platform` | repo structure, env, CI, shared types, feature flags | `apps/web`, `apps/agent`, `packages`, `.github` |
+| `WS-A Platform` | repo structure, env, CI, shared types, feature flags | `src/frontend`, `src/backend`, `packages`, `.github` |
 | `WS-B Supabase` | schema, RLS, migrations, seed data | `supabase/migrations`, `supabase/scripts` |
-| `WS-C Agent` | LangGraph flows, LangChain tools/retrievers, structured outputs | `apps/agent/src` |
-| `WS-D Product API` | Next.js route handlers, server authorization, contracts | `apps/web/app/api`, `packages/shared` |
+| `WS-C Agent` | LangGraph flows, LangChain tools/retrievers, structured outputs | `src/backend` |
+| `WS-D Product API` | Next.js route handlers, server authorization, contracts | `src/frontend/app/api`, `packages/shared` |
 | `WS-E Evaluation` | RAGAS datasets, eval scripts, reports | `eval/datasets`, `eval/reports`, `eval/scripts` |
 | `WS-F Docs/PM` | feature registry, acceptance criteria, handoff notes | `specs`, `planning`, `docs` |
 
@@ -36,15 +36,15 @@ Priority order:
 
 Tasks:
 
-- Move current Python backend skeleton into `apps/agent`.
-- Scaffold `apps/web` with Next.js App Router and TypeScript.
+- Move current Python backend skeleton into `src/backend`.
+- Scaffold `src/frontend` with Next.js App Router and TypeScript.
 - Add `packages/shared` for shared feature IDs, API schemas, and role constants.
-- Add `.env.example` sections for Next.js, Supabase, OpenAI, agent service, and eval.
+- Add `.env.example` sections for Next.js, Supabase, Vercel, OpenAI, agent service, and eval.
 - Keep `make check` or equivalent commands working.
 
 Acceptance:
 
-- `apps/web` and `apps/agent` can run independently.
+- `src/frontend` and `src/backend` can run independently.
 - README matches actual commands.
 - No feature code depends on UI mockups.
 
@@ -257,7 +257,7 @@ Use this table when spawning or assigning agents:
 
 | Agent | First task | Done when |
 |---|---|---|
-| Platform Agent | Create `apps/web`, `apps/agent`, `packages/shared` skeleton | commands and README match actual repo |
+| Platform Agent | Create `src/frontend`, `src/backend`, `packages/shared` skeleton | commands and README match actual repo |
 | Supabase Agent | Implement F01 schema/RLS/seed | cross-org tests pass |
 | Assessment Agent | Implement F02 scoring/profile contracts | deterministic tests pass |
 | Path Agent | Implement F03 recommender graph and API contract | invalid output fallback tested |
@@ -297,8 +297,8 @@ planning/handoffs/<date>-<feature-id>-<short-slug>.md
 
 ## 7. First 48 Hours Checklist
 
-- [ ] Move existing backend skeleton to `apps/agent`.
-- [ ] Scaffold minimal `apps/web`.
+- [ ] Move existing backend skeleton to `src/backend`.
+- [ ] Scaffold minimal `src/frontend`.
 - [ ] Add shared feature ID constants.
 - [ ] Draft F01 migration and RLS tests.
 - [ ] Draft F02 assessment schema and scorer tests.

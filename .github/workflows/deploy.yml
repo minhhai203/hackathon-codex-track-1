@@ -1,0 +1,67 @@
+name: Deploy to Vercel (Production)
+
+# Kiến trúc: Supabase (DB + Backend) + Vercel (Next.js Frontend)
+# Pipeline này chỉ lo phần DEPLOY FRONTEND lên Vercel.
+# Backend logic nằm trong Supabase (RLS, Edge Functions) — không deploy Python.
+#
+# Trigger: push/merge vào nhánh main
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  # ── Deploy Next.js Frontend lên Vercel Production ─────────────────────────
+  deploy-vercel:
+    name: CD — Deploy Frontend to Vercel
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      # Pull thông tin project và environment variables từ Vercel
+      # (các vars như NEXT_PUBLIC_SUPABASE_URL, OPENAI_API_KEY... được quản lý
+      #  trực tiếp trên Vercel Dashboard, không cần set trong GitHub Secrets)
+      - name: Pull Vercel Environment Information
+        run: |
+          vercel pull --yes --environment=production --cwd src/frontend \
+            --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      # Build frontend artifacts
+      - name: Build Project
+        run: |
+          vercel build --prod --cwd src/frontend \
+            --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      # Deploy lên Vercel Production
+      - name: Deploy to Vercel Production
+        id: deploy
+        run: |
+          DEPLOY_URL=$(vercel deploy --prebuilt --prod --cwd src/frontend \
+            --token=${{ secrets.VERCEL_TOKEN }})
+          echo "deploy_url=$DEPLOY_URL" >> $GITHUB_OUTPUT
+          echo "✅ Production URL: $DEPLOY_URL"
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      # Tóm tắt kết quả deploy trong GitHub Actions summary
+      - name: Write deploy summary
+        run: |
+          echo "## 🚀 Deploy Thành Công" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| | |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| **URL** | ${{ steps.deploy.outputs.deploy_url }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Branch** | \`main\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Commit** | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Triggered by** | @${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
