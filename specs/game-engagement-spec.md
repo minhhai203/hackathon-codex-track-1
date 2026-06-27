@@ -1,116 +1,114 @@
-# Feature Spec — F09 Engagement Game (AI Quiz Battle)
+# Feature Spec - F09 Engagement Game
 
-> MVP runtime hiện tại: **Next.js App Router + Next API route handlers** trong `src/frontend`.
-> Supabase scope hiện tại: **migration SQL trong repo**, chưa apply remote. FastAPI WebSocket là phase nâng cấp sau MVP.
+> MVP runtime: Next.js App Router API handlers in `src/frontend`.
+> Supabase scope: migration SQL in repo only, not remote-applied yet.
+> FastAPI WebSocket remains a post-MVP upgrade.
 
-## 1. Product Frame
+## Product Frame
 
-F09 là module quiz AI gắn kết nội bộ cho nền tảng đào tạo AI doanh nghiệp. Game chạy như hoạt động khởi động sáng thứ 2: ngắn, vui, vừa học vừa thi đua lành mạnh giữa phòng ban.
+F09 is an internal AI quiz game for the main training app. The game runs inside the real `src/frontend` experience, uses the existing light teal/panel design system, and does not use `chiennt/game-mockup`.
 
-Yêu cầu chính:
+The MVP has two actors:
 
-- Mỗi phiên dùng 10-15 câu hỏi chủ đề AI.
-- Chấm điểm server-side tất định: đúng/sai, tốc độ trả lời, streak.
-- UI nằm trong app chính, dùng cùng visual language sáng/teal/panel 8px/Georgia heading của `src/frontend`, không dùng giao diện neon/mockup.
-- Kết thúc có winner ceremony và leaderboard tổng lọc theo phòng ban.
-- Câu hỏi AI được soạn/seed trước; không sinh LLM realtime trong lúc chơi.
+- **Truong phong / manager**: creates a room, shares the room code, chooses the question source, and starts/advances the session.
+- **Nhan vien / employee**: joins a room by code and answers questions. Employees cannot start or advance a room.
 
-## 2. MVP Architecture
+## Room And Question Flow
+
+1. Manager opens the Game tab and creates a room.
+2. Manager chooses one question source mode:
+   - `random`: the session uses a random subset from the seeded AI question bank.
+   - `custom`: the manager can select questions from the bank and add new questions for the room.
+3. API returns `session` plus a `host_token`; only the manager client keeps this token.
+4. Manager shares the `pin_code`.
+5. Employees join with `pin_code`, display name, and department.
+6. Manager starts the game once at least one employee has joined.
+7. Employees answer; scoring is calculated server-side.
+8. Manager controls reveal, scoreboard, next question, and winner screen.
+
+## Runtime Architecture
 
 ```text
 src/frontend/
-├── app/page.tsx                         # thêm tab Game vào workspace hiện có
-├── components/game/                     # lobby, question, reveal, scoreboard, winner
-├── lib/game/                            # types, seed data, scoring, in-memory session store
-└── app/api/v1/game/                     # Next API route handlers cho game MVP
-
-supabase/migrations/
-└── 20260627000200_game_engagement.sql   # game_* tables + RLS + seed 12 câu AI
+├── app/page.tsx
+├── components/game/GameScreen.tsx
+├── lib/game/
+│   ├── types.ts
+│   ├── seed.ts
+│   ├── scoring.ts
+│   └── store.ts
+└── app/api/v1/game/
+    ├── questions
+    ├── sessions
+    ├── sessions/join-by-code
+    ├── sessions/[sessionId]/join
+    ├── sessions/[sessionId]/start
+    ├── sessions/[sessionId]/answer
+    ├── sessions/[sessionId]/next
+    └── leaderboard
 ```
 
-### Runtime Boundaries
+The in-memory store is acceptable for the MVP. Supabase tables are prepared by migration for the DB-backed phase.
 
-| Lớp | MVP hiện tại |
-|---|---|
-| View | React components trong `src/frontend/components/game` |
-| Controller | Next API routes `/api/v1/game/*` |
-| Model | TypeScript game engine trong `src/frontend/lib/game` |
-| Live state | In-memory session store theo process Next.js |
-| Persistence target | Supabase migration trong repo, dùng cho phase DB-backed |
+## API Contract
 
-### Post-MVP
-
-FastAPI WebSocket sẽ được thêm sau khi cần realtime production: `join`, `start`, `submit_answer`, `next_question`, `end_session`; client UI giữ controller seam để đổi transport ít nhất có thể.
-
-## 3. API Contract
-
-MVP dùng same-origin Next API:
-
-| Method | Path | Mục đích |
+| Method | Path | Purpose |
 |---|---|---|
-| `POST` | `/api/v1/game/sessions` | tạo phiên demo, trả `session` + `player_id` |
-| `GET` | `/api/v1/game/sessions/[sessionId]` | đọc state phiên |
-| `POST` | `/api/v1/game/sessions/[sessionId]/join` | cập nhật tên/phòng ban người chơi |
-| `POST` | `/api/v1/game/sessions/[sessionId]/start` | chuyển lobby sang câu đầu |
-| `POST` | `/api/v1/game/sessions/[sessionId]/answer` | submit answer và chấm server-side |
-| `POST` | `/api/v1/game/sessions/[sessionId]/next` | question→reveal→scoreboard→next/gameover |
-| `GET` | `/api/v1/game/leaderboard?department=` | đọc leaderboard tổng, lọc phòng ban |
+| `GET` | `/api/v1/game/questions` | Read seeded question bank |
+| `POST` | `/api/v1/game/sessions` | Manager creates a room and receives `host_token` |
+| `GET` | `/api/v1/game/sessions/[sessionId]` | Read public room state |
+| `POST` | `/api/v1/game/sessions/join-by-code` | Employee joins by room code |
+| `POST` | `/api/v1/game/sessions/[sessionId]/join` | Employee joins by session id |
+| `POST` | `/api/v1/game/sessions/[sessionId]/start` | Manager starts room with `host_token` |
+| `POST` | `/api/v1/game/sessions/[sessionId]/answer` | Employee submits answer |
+| `POST` | `/api/v1/game/sessions/[sessionId]/next` | Manager advances phase with `host_token` |
+| `GET` | `/api/v1/game/leaderboard?department=` | Read aggregate leaderboard |
 
-Mọi response trả `session` ở shape public. `answer` trả `accepted=false` với `reason` khi trùng, sai phase, quá hạn hoặc không tìm thấy player/session.
+Start/next return `403` when `host_token` is missing or invalid, and `409` when the room is not ready or phase is invalid.
 
-## 4. Data Model (Supabase)
+## Data Model Target
 
-Migration tạo các bảng:
+Migration `supabase/migrations/20260627000200_game_engagement.sql` defines:
 
-| Bảng | Vai trò |
-|---|---|
-| `game_questions` | câu hỏi AI, type, options, correct index, time limit, fun fact |
-| `game_quizzes` | bộ câu hỏi 10-15 câu theo tổ chức |
-| `game_sessions` | phiên chơi, host, PIN, status |
-| `game_players` | người chơi trong phiên |
-| `game_answers` | từng câu trả lời, response time, correct/points |
-| `game_scores` | điểm tổng kết phiên |
-| `leaderboard_totals` | điểm tích lũy theo tổ chức/phòng ban |
+- `game_questions`: seeded/global and org-scoped AI questions.
+- `game_quizzes`: quiz composition and `question_mode`.
+- `game_sessions`: room state, `pin_code`, host display info, and `question_mode`.
+- `game_players`: employees joined to a room.
+- `game_answers`: answer records with correctness and points.
+- `game_scores`: final per-session score rows.
+- `leaderboard_totals`: aggregate leaderboard by organization/user/department.
 
-RLS:
+RLS stays organization-scoped through `public.is_org_member(organization_id)`. Global active questions remain readable.
 
-- Bảng org-scoped dùng `public.is_org_member(organization_id)`.
-- `game_questions` global (`organization_id is null`) đọc được khi `active=true`.
-- Player/answer/score đọc/ghi qua session thuộc tổ chức của user.
+## Scoring
 
-## 5. Scoring
+Scoring is deterministic and server-side:
 
 ```text
 BASE = 1000
 speed_ratio  = clamp((time_limit_ms - response_ms) / time_limit_ms, 0, 1)
 speed_factor = 0.5 + 0.5 * speed_ratio
-points       = round(BASE * speed_factor) + streak_bonus   nếu đúng
-points       = 0                                            nếu sai / không trả lời
+points       = round(BASE * speed_factor) + streak_bonus   if correct
+points       = 0                                            if wrong or missed
 ```
 
-Streak bonus:
+Tie-break: total points, correct count, total correct response time, display name.
 
-| Streak | Bonus |
-|---|---:|
-| 2 | 100 |
-| 3 | 200 |
-| 4 | 300 |
-| >=5 | 500 |
+## UX Requirements
 
-Tie-break: tổng điểm cao hơn → số câu đúng nhiều hơn → tổng thời gian trả lời đúng thấp hơn → tên hiển thị.
+- UI must match the main app: light background, teal brand, 8px panels, Georgia headings.
+- Role distinction must be visible and operational.
+- Manager sees room code, source mode, employee list, and host-only controls.
+- Employee sees join form, answer screen, reveal, scoreboard, and winner.
+- Animations are CSS-only: word reveal, answer pop, correct/wrong feedback, score float, podium rise.
+- `prefers-reduced-motion` must remain supported.
+- Mobile layouts must not overflow text or controls.
 
-## 6. UX / Game Feel
+## Done
 
-- Bám UI gốc của dự án: sáng, B2B education, teal brand, panel 8px, không dùng mockup neon.
-- Hiệu ứng phải phục vụ cảm giác chơi: chữ câu hỏi xuất hiện theo nhịp, answer tile pop, đúng/sai có feedback, điểm +points float, podium rise.
-- Motion dùng transform/opacity và có `prefers-reduced-motion`.
-- Không bêu xấu người cuối; highlight người chơi hiện tại và top/winner.
-- Mobile không tràn text; answer tile đủ lớn để thao tác.
-
-## 7. Definition of Done
-
-- App chính có tab `Game`, chơi được trọn luồng lobby → question → reveal → scoreboard → winner.
-- Next API routes hoạt động theo contract MVP.
-- Scoring/ranking tất định và chấm trên route handler, không tính điểm trong UI.
-- Migration game Supabase có schema, index, RLS và seed 12 câu hỏi AI.
-- `cd src/frontend && npm run lint` và `npm run build` pass.
+- Game tab is playable in the real app.
+- Manager can create room, select random/custom source, share code, start, and advance.
+- Employee can join by code and answer only.
+- API enforces host-only start/next with `host_token`.
+- Migration and docs reflect the room/actor model.
+- `cd src/frontend && npm run lint` and `npm run build` pass.

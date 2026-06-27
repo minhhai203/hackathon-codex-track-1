@@ -1,6 +1,7 @@
 export type GameQuestionType = "mcq" | "truefalse" | "guess";
 
 export type GamePhase = "lobby" | "question" | "reveal" | "scoreboard" | "gameover";
+export type GameQuestionMode = "random" | "custom";
 
 export type GameQuestion = {
   id: string;
@@ -12,6 +13,7 @@ export type GameQuestion = {
   timeLimitSec: number;
   difficulty: "easy" | "medium" | "hard";
   funFact: string;
+  source?: "bank" | "custom";
 };
 
 export type GamePlayer = {
@@ -19,6 +21,7 @@ export type GamePlayer = {
   displayName: string;
   department: string;
   avatar: string;
+  role: "employee";
   isBot: boolean;
   botAccuracy?: number;
 };
@@ -55,7 +58,10 @@ export type GameSession = {
   quizId: string;
   organizationId: string;
   hostUserId: string;
+  hostDisplayName: string;
+  hostDepartment: string;
   pinCode: string;
+  questionMode: GameQuestionMode;
   status: "lobby" | "active" | "ended";
   phase: GamePhase;
   players: GamePlayer[];
@@ -87,4 +93,34 @@ export type AnswerResult = {
   reason?: "duplicate" | "deadline" | "invalid-phase" | "not-found";
   session: GameSession;
   answer?: GameAnswer;
+};
+
+export type CustomQuestionInput = {
+  prompt: string;
+  options: string[];
+  correctIndex: number;
+  topic?: string;
+};
+
+export type CreateGameSessionInput = {
+  hostName?: string;
+  hostDepartment?: string;
+  questionMode?: GameQuestionMode;
+  selectedQuestionIds?: string[];
+  customQuestions?: CustomQuestionInput[];
+};
+
+export type CreateGameSessionResult = {
+  session: GameSession;
+  hostToken: string;
+};
+
+export type JoinGameSessionResult = {
+  session: GameSession;
+  playerId: string;
+};
+
+export type GameActionResult = {
+  session: GameSession | null;
+  error?: "not-found" | "forbidden" | "not-ready" | "invalid-phase";
 };

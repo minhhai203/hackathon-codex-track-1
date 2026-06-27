@@ -18,6 +18,7 @@ create table if not exists public.game_quizzes (
   id uuid primary key default gen_random_uuid(),
   organization_id uuid not null references public.organizations(id) on delete cascade,
   title text not null,
+  question_mode text not null default 'random' check (question_mode in ('random', 'custom')),
   question_ids jsonb not null check (jsonb_typeof(question_ids) = 'array'),
   created_by uuid references auth.users(id) on delete set null,
   created_at timestamptz not null default now(),
@@ -29,6 +30,9 @@ create table if not exists public.game_sessions (
   quiz_id uuid references public.game_quizzes(id) on delete set null,
   organization_id uuid not null references public.organizations(id) on delete cascade,
   host_user_id uuid references auth.users(id) on delete set null,
+  host_display_name text not null default 'Trưởng phòng',
+  host_department text not null default 'Marketing',
+  question_mode text not null default 'random' check (question_mode in ('random', 'custom')),
   status text not null default 'lobby' check (status in ('lobby', 'active', 'ended')),
   pin_code text not null,
   started_at timestamptz,
@@ -43,6 +47,7 @@ create table if not exists public.game_players (
   user_id uuid references auth.users(id) on delete set null,
   display_name text not null,
   department text not null,
+  role text not null default 'employee' check (role in ('employee')),
   joined_at timestamptz not null default now(),
   unique (session_id, user_id)
 );

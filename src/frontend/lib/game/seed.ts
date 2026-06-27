@@ -5,12 +5,12 @@ export const GAME_HOST_USER_ID = "00000000-0000-0000-0000-000000000902";
 export const HUMAN_PLAYER_ID = "human-player";
 
 export const demoPlayers: GamePlayer[] = [
-  { id: HUMAN_PLAYER_ID, displayName: "Bạn", department: "Marketing", avatar: "AI", isBot: false },
-  { id: "bot-an", displayName: "An", department: "Marketing", avatar: "AN", isBot: true, botAccuracy: 0.78 },
-  { id: "bot-binh", displayName: "Bình", department: "Kinh doanh", avatar: "BI", isBot: true, botAccuracy: 0.64 },
-  { id: "bot-chi", displayName: "Chi", department: "Kế toán", avatar: "CH", isBot: true, botAccuracy: 0.72 },
-  { id: "bot-dung", displayName: "Dũng", department: "Vận hành", avatar: "DU", isBot: true, botAccuracy: 0.58 },
-  { id: "bot-ha", displayName: "Hà", department: "Nhân sự", avatar: "HA", isBot: true, botAccuracy: 0.68 }
+  { id: HUMAN_PLAYER_ID, displayName: "Bạn", department: "Marketing", avatar: "AI", role: "employee", isBot: false },
+  { id: "bot-an", displayName: "An", department: "Marketing", avatar: "AN", role: "employee", isBot: true, botAccuracy: 0.78 },
+  { id: "bot-binh", displayName: "Bình", department: "Kinh doanh", avatar: "BI", role: "employee", isBot: true, botAccuracy: 0.64 },
+  { id: "bot-chi", displayName: "Chi", department: "Kế toán", avatar: "CH", role: "employee", isBot: true, botAccuracy: 0.72 },
+  { id: "bot-dung", displayName: "Dũng", department: "Vận hành", avatar: "DU", role: "employee", isBot: true, botAccuracy: 0.58 },
+  { id: "bot-ha", displayName: "Hà", department: "Nhân sự", avatar: "HA", role: "employee", isBot: true, botAccuracy: 0.68 }
 ];
 
 export const gameQuestions: GameQuestion[] = [

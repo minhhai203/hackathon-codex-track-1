@@ -1,27 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { joinGameSession } from "@/lib/game/store";
+import { joinGameSessionByCode } from "@/lib/game/store";
 
 export const dynamic = "force-dynamic";
 
-type RouteContext = {
-  params: Promise<{ sessionId: string }> | { sessionId: string };
-};
-
-async function readSessionId(context: RouteContext) {
-  const params = await context.params;
-  return params.sessionId;
-}
-
-export async function POST(request: NextRequest, context: RouteContext) {
+export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
-  const result = joinGameSession(
-    await readSessionId(context),
+  const result = joinGameSessionByCode(
+    String(body.pin_code || ""),
     String(body.display_name || "Nhân viên"),
     String(body.department || "Marketing")
   );
 
   if (!result) {
-    return NextResponse.json({ error: "Session not found" }, { status: 404 });
+    return NextResponse.json({ error: "Room not found" }, { status: 404 });
   }
 
   if (!result.playerId) {

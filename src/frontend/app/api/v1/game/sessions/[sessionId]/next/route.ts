@@ -12,10 +12,18 @@ async function readSessionId(context: RouteContext) {
   return params.sessionId;
 }
 
-export async function POST(_request: Request, context: RouteContext) {
-  const session = advanceGameSession(await readSessionId(context));
-  if (!session) {
-    return NextResponse.json({ error: "Session not found" }, { status: 404 });
+function statusForError(error?: string) {
+  if (error === "not-found") return 404;
+  if (error === "forbidden") return 403;
+  if (error === "not-ready" || error === "invalid-phase") return 409;
+  return 200;
+}
+
+export async function POST(request: Request, context: RouteContext) {
+  const body = await request.json().catch(() => ({}));
+  const result = advanceGameSession(await readSessionId(context), String(body.host_token || ""));
+  if (result.error) {
+    return NextResponse.json({ error: result.error, session: result.session }, { status: statusForError(result.error) });
   }
-  return NextResponse.json({ session });
+  return NextResponse.json({ session: result.session });
 }

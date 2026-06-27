@@ -1,11 +1,15 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { GameSession, LeaderboardRow } from "@/lib/game/types";
+import { GameQuestion, GameQuestionMode, GameSession, LeaderboardRow } from "@/lib/game/types";
+
+type Actor = "manager" | "employee";
 
 type SessionResponse = {
   session: GameSession;
   player_id?: string;
+  host_token?: string;
+  error?: string;
 };
 
 type AnswerResponse = {
@@ -14,12 +18,26 @@ type AnswerResponse = {
   session: GameSession;
 };
 
+type CustomQuestionDraft = {
+  prompt: string;
+  options: string[];
+  correctIndex: number;
+  topic: string;
+};
+
 const optionMeta = [
   { label: "A", shape: "▲", tone: "red" },
   { label: "B", shape: "◆", tone: "blue" },
   { label: "C", shape: "●", tone: "amber" },
   { label: "D", shape: "■", tone: "brand" }
 ] as const;
+
+const emptyDraft: CustomQuestionDraft = {
+  prompt: "",
+  options: ["", "", "", ""],
+  correctIndex: 0,
+  topic: "Câu hỏi nội bộ"
+};
 
 async function apiJson<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, {
@@ -30,23 +48,65 @@ async function apiJson<T>(path: string, init?: RequestInit): Promise<T> {
       ...(init?.headers ?? {})
     }
   });
-
-  if (!response.ok && response.status !== 409) {
-    throw new Error(`Game API failed: ${response.status}`);
+  const body = (await response.json()) as T;
+  if (!response.ok) {
+    const message = body && typeof body === "object" && "error" in body ? String((body as { error?: string }).error) : `HTTP ${response.status}`;
+    throw new Error(message);
   }
-
-  return response.json() as Promise<T>;
+  return body;
 }
 
 export function GameScreen() {
+  const [actor, setActor] = useState<Actor>("manager");
   const [session, setSession] = useState<GameSession | null>(null);
-  const [playerId, setPlayerId] = useState("human-player");
-  const [displayName, setDisplayName] = useState("Bạn");
-  const [department, setDepartment] = useState("Marketing");
+  const [hostToken, setHostToken] = useState("");
+  const [employeePlayerId, setEmployeePlayerId] = useState("");
+  const [questionBank, setQuestionBank] = useState<GameQuestion[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardRow[]>([]);
   const [selectedDepartment, setSelectedDepartment] = useState("Tất cả");
   const [isBusy, setIsBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [hostName, setHostName] = useState("Chị Lan");
+  const [hostDepartment, setHostDepartment] = useState("Marketing");
+  const [questionMode, setQuestionMode] = useState<GameQuestionMode>("random");
+  const [selectedQuestionIds, setSelectedQuestionIds] = useState<string[]>([]);
+  const [customQuestions, setCustomQuestions] = useState<CustomQuestionDraft[]>([]);
+  const [draft, setDraft] = useState<CustomQuestionDraft>(emptyDraft);
+
+  const [joinPin, setJoinPin] = useState("");
+  const [employeeName, setEmployeeName] = useState("Bạn");
+  const [employeeDepartment, setEmployeeDepartment] = useState("Marketing");
+
+  useEffect(() => {
+    void refreshQuestionBank();
+    void refreshLeaderboard("Tất cả");
+  }, []);
+
+  const currentQuestion = session?.questions[session.currentIndex] ?? null;
+  const myAnswer = employeePlayerId ? session?.currentAnswers[employeePlayerId] : undefined;
+  const myScore = employeePlayerId ? session?.scores[employeePlayerId] : undefined;
+  const departments = useMemo(() => {
+    const values = new Set([
+      employeeDepartment,
+      hostDepartment,
+      ...(session?.players.map((player) => player.department) ?? []),
+      ...leaderboard.map((row) => row.department)
+    ]);
+    return ["Tất cả", ...Array.from(values).filter(Boolean)];
+  }, [employeeDepartment, hostDepartment, leaderboard, session]);
+
+  async function refreshQuestionBank() {
+    const result = await apiJson<{ questions: GameQuestion[] }>("/api/v1/game/questions");
+    setQuestionBank(result.questions);
+    setSelectedQuestionIds((current) => (current.length ? current : result.questions.slice(0, 6).map((question) => question.id)));
+  }
+
+  async function refreshSession() {
+    if (!session) return;
+    const result = await apiJson<SessionResponse>(`/api/v1/game/sessions/${session.id}`);
+    setSession(result.session);
+  }
 
   async function refreshLeaderboard(departmentFilter = selectedDepartment) {
     const query = departmentFilter === "Tất cả" ? "" : `?department=${encodeURIComponent(departmentFilter)}`;
@@ -54,87 +114,104 @@ export function GameScreen() {
     setLeaderboard(result.leaderboard);
   }
 
-  async function createSession() {
-    setIsBusy(true);
-    setError(null);
-    try {
-      const result = await apiJson<SessionResponse>("/api/v1/game/sessions", { method: "POST" });
-      setSession(result.session);
-      if (result.player_id) setPlayerId(result.player_id);
-      await refreshLeaderboard("Tất cả");
-    } catch {
-      setError("Chưa tạo được phòng game. Vui lòng thử lại.");
-    } finally {
-      setIsBusy(false);
-    }
-  }
-
-  useEffect(() => {
-    void createSession();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const currentQuestion = session?.questions[session.currentIndex] ?? null;
-  const myAnswer = session?.currentAnswers[playerId];
-  const myScore = session?.scores[playerId];
-  const departments = useMemo(() => {
-    const values = new Set([department, ...(session?.players.map((player) => player.department) ?? []), ...leaderboard.map((row) => row.department)]);
-    return ["Tất cả", ...Array.from(values)];
-  }, [department, leaderboard, session]);
-
-  async function runAction(action: () => Promise<GameSession | null>, next?: () => Promise<void>) {
+  async function runAction(action: () => Promise<void>) {
     if (isBusy) return;
     setIsBusy(true);
     setError(null);
     try {
-      const nextSession = await action();
-      if (nextSession) setSession(nextSession);
-      if (next) await next();
-    } catch {
-      setError("Game API đang bận. Thử lại một nhịp nữa nhé.");
+      await action();
+    } catch (caught) {
+      const message = caught instanceof Error ? caught.message : "request-failed";
+      setError(readableError(message));
     } finally {
       setIsBusy(false);
     }
   }
 
-  async function startGame(event: FormEvent<HTMLFormElement>) {
+  async function createRoom(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    await runAction(async () => {
+      const result = await apiJson<SessionResponse>("/api/v1/game/sessions", {
+        method: "POST",
+        body: JSON.stringify({
+          host_name: hostName,
+          host_department: hostDepartment,
+          question_mode: questionMode,
+          selected_question_ids: questionMode === "custom" ? selectedQuestionIds : [],
+          custom_questions: questionMode === "custom" ? customQuestions : []
+        })
+      });
+      setSession(result.session);
+      setHostToken(result.host_token ?? "");
+      setJoinPin(result.session.pinCode);
+      setActor("manager");
+    });
+  }
+
+  async function joinRoom(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await runAction(async () => {
+      const result = await apiJson<SessionResponse>("/api/v1/game/sessions/join-by-code", {
+        method: "POST",
+        body: JSON.stringify({
+          pin_code: joinPin,
+          display_name: employeeName,
+          department: employeeDepartment
+        })
+      });
+      setSession(result.session);
+      setEmployeePlayerId(result.player_id ?? "");
+      setActor("employee");
+    });
+  }
+
+  async function startRoom() {
     if (!session) return;
     await runAction(async () => {
-      const joined = await apiJson<SessionResponse>(`/api/v1/game/sessions/${session.id}/join`, {
+      const result = await apiJson<SessionResponse>(`/api/v1/game/sessions/${session.id}/start`, {
         method: "POST",
-        body: JSON.stringify({ display_name: displayName, department })
+        body: JSON.stringify({ host_token: hostToken })
       });
-      setPlayerId(joined.player_id ?? playerId);
-      const started = await apiJson<SessionResponse>(`/api/v1/game/sessions/${session.id}/start`, { method: "POST" });
-      return started.session;
+      setSession(result.session);
+    });
+  }
+
+  async function advanceRoom() {
+    if (!session) return;
+    await runAction(async () => {
+      const result = await apiJson<SessionResponse>(`/api/v1/game/sessions/${session.id}/next`, {
+        method: "POST",
+        body: JSON.stringify({ host_token: hostToken })
+      });
+      setSession(result.session);
+      if (result.session.phase === "gameover") await refreshLeaderboard();
     });
   }
 
   async function submitAnswer(selectedIndex: number) {
-    if (!session || myAnswer) return;
+    if (!session || !employeePlayerId || myAnswer) return;
     await runAction(async () => {
       const result = await apiJson<AnswerResponse>(`/api/v1/game/sessions/${session.id}/answer`, {
         method: "POST",
-        body: JSON.stringify({ player_id: playerId, selected_index: selectedIndex })
+        body: JSON.stringify({ player_id: employeePlayerId, selected_index: selectedIndex })
       });
-      return result.session;
+      setSession(result.session);
     });
   }
 
-  async function advance() {
-    if (!session) return;
-    await runAction(
-      async () => {
-        const result = await apiJson<SessionResponse>(`/api/v1/game/sessions/${session.id}/next`, { method: "POST" });
-        return result.session;
-      },
-      async () => {
-        if (session.phase === "scoreboard" && session.currentIndex === session.questions.length - 1) {
-          await refreshLeaderboard();
-        }
-      }
-    );
+  function toggleQuestion(questionId: string) {
+    setSelectedQuestionIds((current) => (current.includes(questionId) ? current.filter((id) => id !== questionId) : [...current, questionId]));
+  }
+
+  function addCustomQuestion() {
+    const options = draft.options.map((option) => option.trim()).filter(Boolean);
+    if (!draft.prompt.trim() || options.length < 2 || draft.correctIndex >= options.length) {
+      setError("Câu hỏi tự tạo cần có nội dung, ít nhất 2 đáp án và đáp án đúng hợp lệ.");
+      return;
+    }
+    setCustomQuestions((current) => [...current, { ...draft, options }]);
+    setDraft(emptyDraft);
+    setError(null);
   }
 
   async function filterLeaderboard(nextDepartment: string) {
@@ -142,81 +219,154 @@ export function GameScreen() {
     await refreshLeaderboard(nextDepartment);
   }
 
-  if (!session) {
-    return (
-      <section className="panel gameLoading">
-        <p className="eyebrow">AI Quiz Battle</p>
-        <h2>Đang mở phòng game</h2>
-        <p>Chuẩn bị câu hỏi AI, điểm số và leaderboard cho buổi khởi động.</p>
-      </section>
-    );
-  }
-
   return (
     <div className="gameStack">
       <section className="gameHero panel">
         <div>
           <p className="eyebrow">F09 Engagement Game</p>
-          <h2>AI Quiz Battle</h2>
+          <h2>Phòng quiz AI cho đội nhóm</h2>
           <p>
-            Phiên quiz AI ngắn cho đội ngũ: chấm điểm phía server, câu hỏi vừa sức, có reveal đúng/sai và
-            leaderboard theo phòng ban.
+            Trưởng phòng tạo phòng và chọn nguồn câu hỏi. Nhân viên chỉ cần mã phòng để vào chơi, trả lời và xem bảng điểm.
           </p>
         </div>
         <div className="gameHeroMetrics">
-          <Metric label="Mã phòng" value={session.pinCode} />
-          <Metric label="Người chơi" value={String(session.players.length)} />
-          <Metric label="Câu hỏi" value={`${session.currentIndex + 1}/${session.questions.length}`} />
+          <Metric label="Vai trò" value={actor === "manager" ? "Trưởng phòng" : "Nhân viên"} />
+          <Metric label="Mã phòng" value={session?.pinCode ?? "Chưa tạo"} />
+          <Metric label="Nhân viên" value={String(session?.players.length ?? 0)} />
         </div>
       </section>
 
+      <div className="gameRoleTabs departmentPicker" aria-label="Chọn vai trò game">
+        <button className={actor === "manager" ? "selected" : ""} onClick={() => setActor("manager")} type="button">
+          Trưởng phòng
+        </button>
+        <button className={actor === "employee" ? "selected" : ""} onClick={() => setActor("employee")} type="button">
+          Nhân viên
+        </button>
+        {session && (
+          <button onClick={refreshSession} type="button">
+            Làm mới phòng
+          </button>
+        )}
+      </div>
+
       {error && <div className="resultStrip gameError">{error}</div>}
 
-      {session.phase === "lobby" && (
+      {!session && (
+        <div className="twoColumn gameSetupGrid">
+          {actor === "manager" ? (
+            <ManagerCreatePanel
+              customQuestions={customQuestions}
+              draft={draft}
+              hostDepartment={hostDepartment}
+              hostName={hostName}
+              isBusy={isBusy}
+              onAddCustom={addCustomQuestion}
+              onCreate={createRoom}
+              onDraft={setDraft}
+              onHostDepartment={setHostDepartment}
+              onHostName={setHostName}
+              onQuestionMode={setQuestionMode}
+              onToggleQuestion={toggleQuestion}
+              questionBank={questionBank}
+              questionMode={questionMode}
+              selectedQuestionIds={selectedQuestionIds}
+            />
+          ) : (
+            <EmployeeJoinPanel
+              employeeDepartment={employeeDepartment}
+              employeeName={employeeName}
+              isBusy={isBusy}
+              joinPin={joinPin}
+              onDepartment={setEmployeeDepartment}
+              onJoin={joinRoom}
+              onName={setEmployeeName}
+              onPin={setJoinPin}
+            />
+          )}
+          <QuestionSourcePanel customQuestions={customQuestions} questionBank={questionBank} selectedQuestionIds={selectedQuestionIds} />
+        </div>
+      )}
+
+      {session && session.phase === "lobby" && (
         <LobbyPanel
-          department={department}
-          displayName={displayName}
+          actor={actor}
+          employeeDepartment={employeeDepartment}
+          employeeName={employeeName}
+          hostToken={hostToken}
           isBusy={isBusy}
-          onDepartment={setDepartment}
-          onDisplayName={setDisplayName}
-          onStart={startGame}
+          joinPin={joinPin}
+          onDepartment={setEmployeeDepartment}
+          onJoin={joinRoom}
+          onName={setEmployeeName}
+          onPin={setJoinPin}
+          onStart={startRoom}
           session={session}
         />
       )}
 
-      {session.phase === "question" && currentQuestion && (
-        <QuestionPanel
+      {session && session.phase === "question" && currentQuestion && (
+        <>
+          {actor === "employee" ? (
+            <QuestionPanel
+              currentQuestion={currentQuestion}
+              isBusy={isBusy}
+              myAnswer={myAnswer}
+              myScore={myScore}
+              onAnswer={submitAnswer}
+              playerId={employeePlayerId}
+              session={session}
+            />
+          ) : (
+            <HostQuestionPanel currentQuestion={currentQuestion} isBusy={isBusy} onAdvance={advanceRoom} session={session} />
+          )}
+        </>
+      )}
+
+      {session && session.phase === "reveal" && currentQuestion && (
+        <RevealPanel
+          actor={actor}
           currentQuestion={currentQuestion}
-          isBusy={isBusy}
           myAnswer={myAnswer}
           myScore={myScore}
-          onAdvance={advance}
-          onAnswer={submitAnswer}
+          onAdvance={advanceRoom}
           session={session}
         />
       )}
 
-      {session.phase === "reveal" && currentQuestion && (
-        <RevealPanel currentQuestion={currentQuestion} myAnswer={myAnswer} myScore={myScore} onAdvance={advance} session={session} />
+      {session && session.phase === "scoreboard" && (
+        <ScoreboardPanel actor={actor} isBusy={isBusy} onAdvance={advanceRoom} playerId={employeePlayerId} session={session} />
       )}
 
-      {session.phase === "scoreboard" && (
-        <ScoreboardPanel isBusy={isBusy} onAdvance={advance} playerId={playerId} session={session} />
-      )}
-
-      {session.phase === "gameover" && (
+      {session && session.phase === "gameover" && (
         <WinnerPanel
+          actor={actor}
           departments={departments}
           leaderboard={leaderboard}
           onDepartment={filterLeaderboard}
-          onReplay={createSession}
-          playerId={playerId}
+          onReplay={() => {
+            setSession(null);
+            setHostToken("");
+            setEmployeePlayerId("");
+            setActor("manager");
+          }}
+          playerId={employeePlayerId}
           selectedDepartment={selectedDepartment}
           session={session}
         />
       )}
     </div>
   );
+}
+
+function readableError(message: string) {
+  if (message === "forbidden") return "Chỉ trưởng phòng tạo phòng mới có quyền điều khiển phiên chơi.";
+  if (message === "not-ready") return "Cần ít nhất 1 nhân viên join phòng trước khi bắt đầu.";
+  if (message === "Room not found") return "Không tìm thấy phòng với mã này.";
+  if (message === "Room already started") return "Phòng đã bắt đầu, nhân viên mới không thể join.";
+  if (message.toLowerCase().includes("fetch")) return "Không kết nối được Next API. Kiểm tra dev server real app ở localhost:3000.";
+  if (message.includes("Failed to fetch")) return "Không kết nối được Next API. Kiểm tra dev server real app ở localhost:3000.";
+  return "Game API đang bận. Thử lại một nhịp nữa nhé.";
 }
 
 function Metric({ label, value }: { label: string; value: string }) {
@@ -228,49 +378,263 @@ function Metric({ label, value }: { label: string; value: string }) {
   );
 }
 
-function LobbyPanel({
-  department,
-  displayName,
+function ManagerCreatePanel({
+  customQuestions,
+  draft,
+  hostDepartment,
+  hostName,
   isBusy,
+  onAddCustom,
+  onCreate,
+  onDraft,
+  onHostDepartment,
+  onHostName,
+  onQuestionMode,
+  onToggleQuestion,
+  questionBank,
+  questionMode,
+  selectedQuestionIds
+}: {
+  customQuestions: CustomQuestionDraft[];
+  draft: CustomQuestionDraft;
+  hostDepartment: string;
+  hostName: string;
+  isBusy: boolean;
+  onAddCustom: () => void;
+  onCreate: (event: FormEvent<HTMLFormElement>) => void;
+  onDraft: (draft: CustomQuestionDraft) => void;
+  onHostDepartment: (value: string) => void;
+  onHostName: (value: string) => void;
+  onQuestionMode: (value: GameQuestionMode) => void;
+  onToggleQuestion: (questionId: string) => void;
+  questionBank: GameQuestion[];
+  questionMode: GameQuestionMode;
+  selectedQuestionIds: string[];
+}) {
+  return (
+    <section className="panel">
+      <p className="eyebrow">Trưởng phòng</p>
+      <h2>Tạo phòng và chọn nguồn câu hỏi</h2>
+      <form className="assessmentForm" onSubmit={onCreate}>
+        <label>
+          Tên trưởng phòng
+          <input value={hostName} onChange={(event) => onHostName(event.target.value)} />
+        </label>
+        <label>
+          Phòng ban
+          <input value={hostDepartment} onChange={(event) => onHostDepartment(event.target.value)} />
+        </label>
+        <div className="gameModePicker departmentPicker" aria-label="Chọn nguồn câu hỏi">
+          <button className={questionMode === "random" ? "selected" : ""} onClick={() => onQuestionMode("random")} type="button">
+            Random từ nguồn
+          </button>
+          <button className={questionMode === "custom" ? "selected" : ""} onClick={() => onQuestionMode("custom")} type="button">
+            Tự chọn / tạo mới
+          </button>
+        </div>
+        {questionMode === "custom" && (
+          <>
+            <div className="gameQuestionBank">
+              {questionBank.slice(0, 12).map((question) => (
+                <button
+                  className={selectedQuestionIds.includes(question.id) ? "selected" : ""}
+                  key={question.id}
+                  onClick={() => onToggleQuestion(question.id)}
+                  type="button"
+                >
+                  <strong>{question.topic}</strong>
+                  <span>{question.prompt}</span>
+                </button>
+              ))}
+            </div>
+            <div className="gameCustomBuilder">
+              <label>
+                Câu hỏi mới
+                <textarea value={draft.prompt} onChange={(event) => onDraft({ ...draft, prompt: event.target.value })} rows={3} />
+              </label>
+              <div className="fieldGrid">
+                {draft.options.map((option, index) => (
+                  <label key={index}>
+                    Đáp án {index + 1}
+                    <input
+                      value={option}
+                      onChange={(event) => {
+                        const nextOptions = [...draft.options];
+                        nextOptions[index] = event.target.value;
+                        onDraft({ ...draft, options: nextOptions });
+                      }}
+                    />
+                  </label>
+                ))}
+              </div>
+              <label>
+                Đáp án đúng
+                <select value={draft.correctIndex} onChange={(event) => onDraft({ ...draft, correctIndex: Number(event.target.value) })}>
+                  {draft.options.map((_, index) => (
+                    <option key={index} value={index}>
+                      Đáp án {index + 1}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button className="secondaryButton" onClick={onAddCustom} type="button">
+                Thêm câu hỏi
+              </button>
+              {customQuestions.length > 0 && <span className="scoreBadge">{customQuestions.length} câu tự tạo</span>}
+            </div>
+          </>
+        )}
+        <button className="primaryButton full" disabled={isBusy} type="submit">
+          {isBusy ? "Đang tạo phòng..." : "Tạo phòng"}
+        </button>
+      </form>
+    </section>
+  );
+}
+
+function EmployeeJoinPanel({
+  employeeDepartment,
+  employeeName,
+  isBusy,
+  joinPin,
   onDepartment,
-  onDisplayName,
+  onJoin,
+  onName,
+  onPin
+}: {
+  employeeDepartment: string;
+  employeeName: string;
+  isBusy: boolean;
+  joinPin: string;
+  onDepartment: (value: string) => void;
+  onJoin: (event: FormEvent<HTMLFormElement>) => void;
+  onName: (value: string) => void;
+  onPin: (value: string) => void;
+}) {
+  return (
+    <section className="panel">
+      <p className="eyebrow">Nhân viên</p>
+      <h2>Join phòng bằng mã được share</h2>
+      <form className="assessmentForm" onSubmit={onJoin}>
+        <label>
+          Mã phòng
+          <input inputMode="numeric" maxLength={6} value={joinPin} onChange={(event) => onPin(event.target.value.replace(/\D/g, ""))} />
+        </label>
+        <label>
+          Tên hiển thị
+          <input value={employeeName} onChange={(event) => onName(event.target.value)} />
+        </label>
+        <label>
+          Phòng ban
+          <input value={employeeDepartment} onChange={(event) => onDepartment(event.target.value)} />
+        </label>
+        <button className="primaryButton full" disabled={isBusy || joinPin.length < 6} type="submit">
+          {isBusy ? "Đang join..." : "Join phòng"}
+        </button>
+      </form>
+    </section>
+  );
+}
+
+function QuestionSourcePanel({
+  customQuestions,
+  questionBank,
+  selectedQuestionIds
+}: {
+  customQuestions: CustomQuestionDraft[];
+  questionBank: GameQuestion[];
+  selectedQuestionIds: string[];
+}) {
+  return (
+    <section className="panel">
+      <div className="panelHeader">
+        <div>
+          <p className="eyebrow">Nguồn câu hỏi</p>
+          <h2>{questionBank.length} câu AI có sẵn</h2>
+        </div>
+        <span className="scoreBadge">{selectedQuestionIds.length + customQuestions.length} đã chọn</span>
+      </div>
+      <div className="miniList">
+        {questionBank.slice(0, 6).map((question) => (
+          <div key={question.id}>
+            <strong>{question.topic}</strong>
+            <span>{question.prompt}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function LobbyPanel({
+  actor,
+  employeeDepartment,
+  employeeName,
+  hostToken,
+  isBusy,
+  joinPin,
+  onDepartment,
+  onJoin,
+  onName,
+  onPin,
   onStart,
   session
 }: {
-  department: string;
-  displayName: string;
+  actor: Actor;
+  employeeDepartment: string;
+  employeeName: string;
+  hostToken: string;
   isBusy: boolean;
+  joinPin: string;
   onDepartment: (value: string) => void;
-  onDisplayName: (value: string) => void;
-  onStart: (event: FormEvent<HTMLFormElement>) => void;
+  onJoin: (event: FormEvent<HTMLFormElement>) => void;
+  onName: (value: string) => void;
+  onPin: (value: string) => void;
+  onStart: () => void;
   session: GameSession;
 }) {
   return (
     <div className="twoColumn gameLobby">
       <section className="panel">
-        <p className="eyebrow">Lobby</p>
-        <h2>Vào phòng bằng mã {session.pinCode}</h2>
-        <form className="assessmentForm" onSubmit={onStart}>
-          <label>
-            Tên hiển thị
-            <input value={displayName} onChange={(event) => onDisplayName(event.target.value)} />
-          </label>
-          <label>
-            Phòng ban
-            <input value={department} onChange={(event) => onDepartment(event.target.value)} />
-          </label>
-          <button className="primaryButton full" disabled={isBusy} type="submit">
-            {isBusy ? "Đang bắt đầu..." : "Bắt đầu phiên game"}
+        <p className="eyebrow">{actor === "manager" ? "Điều khiển phòng" : "Join phòng"}</p>
+        <h2>Mã phòng {session.pinCode}</h2>
+        <div className="gameRoomCode">{session.pinCode}</div>
+        <div className="gameHostMeta">
+          <span>Host: {session.hostDisplayName}</span>
+          <span>{session.questionMode === "random" ? "Random từ nguồn" : "Tự chọn / tạo mới"}</span>
+          <span>{session.questions.length} câu</span>
+        </div>
+        {actor === "manager" ? (
+          <button className="primaryButton full" disabled={!hostToken || session.players.length === 0 || isBusy} onClick={onStart} type="button">
+            {isBusy ? "Đang bắt đầu..." : "Bắt đầu phiên chơi"}
           </button>
-        </form>
+        ) : (
+          <form className="assessmentForm" onSubmit={onJoin}>
+            <label>
+              Mã phòng
+              <input inputMode="numeric" maxLength={6} value={joinPin} onChange={(event) => onPin(event.target.value.replace(/\D/g, ""))} />
+            </label>
+            <label>
+              Tên hiển thị
+              <input value={employeeName} onChange={(event) => onName(event.target.value)} />
+            </label>
+            <label>
+              Phòng ban
+              <input value={employeeDepartment} onChange={(event) => onDepartment(event.target.value)} />
+            </label>
+            <button className="primaryButton full" disabled={isBusy || joinPin.length < 6} type="submit">
+              {isBusy ? "Đang join..." : "Join phòng"}
+            </button>
+          </form>
+        )}
       </section>
       <section className="panel">
         <div className="panelHeader">
           <div>
-            <p className="eyebrow">Người chơi</p>
-            <h2>{session.players.length} người sẵn sàng</h2>
+            <p className="eyebrow">Nhân viên trong phòng</p>
+            <h2>{session.players.length} người đã join</h2>
           </div>
-          <span className="scoreBadge">Server-side scoring</span>
+          <span className="scoreBadge">Host-only start</span>
         </div>
         <div className="gamePlayerGrid">
           {session.players.map((player, index) => (
@@ -280,27 +644,22 @@ function LobbyPanel({
               <small>{player.department}</small>
             </div>
           ))}
+          {session.players.length === 0 && <p className="lessonLead">Chờ nhân viên nhập mã phòng để tham gia.</p>}
         </div>
       </section>
     </div>
   );
 }
 
-function QuestionPanel({
+function HostQuestionPanel({
   currentQuestion,
   isBusy,
-  myAnswer,
-  myScore,
   onAdvance,
-  onAnswer,
   session
 }: {
   currentQuestion: GameSession["questions"][number];
   isBusy: boolean;
-  myAnswer: GameSession["currentAnswers"][string] | undefined;
-  myScore: GameSession["scores"][string] | undefined;
   onAdvance: () => void;
-  onAnswer: (index: number) => void;
   session: GameSession;
 }) {
   const answeredCount = Object.keys(session.currentAnswers).length;
@@ -309,7 +668,7 @@ function QuestionPanel({
     <section className="panel gameQuestionPanel">
       <div className="panelHeader">
         <div>
-          <p className="eyebrow">Câu {session.currentIndex + 1} / {session.questions.length}</p>
+          <p className="eyebrow">Trưởng phòng điều khiển</p>
           <h2>
             <AnimatedWords text={currentQuestion.prompt} />
           </h2>
@@ -318,14 +677,72 @@ function QuestionPanel({
       </div>
       <div className="gameTopicRow">
         <span className="scoreBadge">{currentQuestion.topic}</span>
-        <span>{answeredCount}/{session.players.length} đã trả lời</span>
+        <span>
+          {answeredCount}/{session.players.length} nhân viên đã trả lời
+        </span>
+      </div>
+      <div className="gameHostOptions">
+        {currentQuestion.options.map((option, index) => (
+          <div key={option}>
+            <span>{optionMeta[index % optionMeta.length].label}</span>
+            <strong>{option}</strong>
+          </div>
+        ))}
+      </div>
+      <div className="buttonRow right">
+        <button className="secondaryButton" disabled={isBusy} onClick={onAdvance} type="button">
+          Reveal đáp án
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function QuestionPanel({
+  currentQuestion,
+  isBusy,
+  myAnswer,
+  myScore,
+  onAnswer,
+  playerId,
+  session
+}: {
+  currentQuestion: GameSession["questions"][number];
+  isBusy: boolean;
+  myAnswer: GameSession["currentAnswers"][string] | undefined;
+  myScore: GameSession["scores"][string] | undefined;
+  onAnswer: (index: number) => void;
+  playerId: string;
+  session: GameSession;
+}) {
+  const answeredCount = Object.keys(session.currentAnswers).length;
+
+  return (
+    <section className="panel gameQuestionPanel">
+      <div className="panelHeader">
+        <div>
+          <p className="eyebrow">
+            Câu {session.currentIndex + 1} / {session.questions.length}
+          </p>
+          <h2>
+            <AnimatedWords text={currentQuestion.prompt} />
+          </h2>
+        </div>
+        <Countdown deadlineTs={session.deadlineTs} timeLimitSec={currentQuestion.timeLimitSec} />
+      </div>
+      <div className="gameTopicRow">
+        <span className="scoreBadge">{currentQuestion.topic}</span>
+        <span>
+          {answeredCount}/{session.players.length} đã trả lời
+        </span>
         {myAnswer && <span className="gameSent">Đã gửi +{myScore?.lastGain ?? 0}</span>}
+        {!playerId && <span className="gameSent">Join phòng để trả lời</span>}
       </div>
       <div className={currentQuestion.type === "truefalse" ? "gameAnswerGrid two" : "gameAnswerGrid"}>
         {currentQuestion.options.map((option, index) => {
           const meta = optionMeta[index % optionMeta.length];
           const selected = myAnswer?.selectedIndex === index;
-          const locked = Boolean(myAnswer);
+          const locked = Boolean(myAnswer) || !playerId;
           return (
             <button
               className={`gameAnswerTile ${meta.tone} ${selected ? "selected" : ""}`}
@@ -341,22 +758,19 @@ function QuestionPanel({
           );
         })}
       </div>
-      <div className="buttonRow right">
-        <button className="secondaryButton" disabled={!myAnswer || isBusy} onClick={onAdvance} type="button">
-          Reveal đáp án
-        </button>
-      </div>
     </section>
   );
 }
 
 function RevealPanel({
+  actor,
   currentQuestion,
   myAnswer,
   myScore,
   onAdvance,
   session
 }: {
+  actor: Actor;
   currentQuestion: GameSession["questions"][number];
   myAnswer: GameSession["currentAnswers"][string] | undefined;
   myScore: GameSession["scores"][string] | undefined;
@@ -373,8 +787,14 @@ function RevealPanel({
     <div className="twoColumn gameReveal">
       <section className={`panel gameResultPanel ${correct ? "correct" : "wrong"}`}>
         <p className="eyebrow">Kết quả</p>
-        <h2>{correct ? "Chính xác" : myAnswer ? "Chưa đúng" : "Hết giờ"}</h2>
-        <p>{correct ? "Câu trả lời nhanh và đúng được cộng điểm tốc độ." : "Đáp án đúng đã được highlight để cả đội cùng học."}</p>
+        <h2>{actor === "manager" ? "Đáp án đã reveal" : correct ? "Chính xác" : myAnswer ? "Chưa đúng" : "Hết giờ"}</h2>
+        <p>
+          {actor === "manager"
+            ? "Trưởng phòng có thể chuyển qua bảng điểm sau khi cả đội cùng xem đáp án."
+            : correct
+              ? "Trả lời đúng và nhanh sẽ được cộng điểm tốc độ."
+              : "Đáp án đúng đã được highlight để cả đội cùng học."}
+        </p>
         {correct && <div className="gameScoreFloat">+{myScore?.lastGain ?? 0}</div>}
         {myScore && myScore.streak >= 2 && <span className="scoreBadge">Streak x{myScore.streak}</span>}
       </section>
@@ -397,25 +817,29 @@ function RevealPanel({
           })}
         </div>
         <div className="resultStrip gameFunFact">
-          <strong>Fun fact AI</strong>
+          <strong>Ghi nhớ</strong>
           <span>{currentQuestion.funFact}</span>
         </div>
-        <div className="buttonRow right">
-          <button className="primaryButton" onClick={onAdvance} type="button">
-            Xem bảng xếp hạng
-          </button>
-        </div>
+        {actor === "manager" && (
+          <div className="buttonRow right">
+            <button className="primaryButton" onClick={onAdvance} type="button">
+              Xem bảng xếp hạng
+            </button>
+          </div>
+        )}
       </section>
     </div>
   );
 }
 
 function ScoreboardPanel({
+  actor,
   isBusy,
   onAdvance,
   playerId,
   session
 }: {
+  actor: Actor;
   isBusy: boolean;
   onAdvance: () => void;
   playerId: string;
@@ -430,9 +854,11 @@ function ScoreboardPanel({
           <p className="eyebrow">Scoreboard</p>
           <h2>Thứ hạng sau câu {session.currentIndex + 1}</h2>
         </div>
-        <button className="primaryButton" disabled={isBusy} onClick={onAdvance} type="button">
-          {more ? "Câu tiếp theo" : "Xem người chiến thắng"}
-        </button>
+        {actor === "manager" && (
+          <button className="primaryButton" disabled={isBusy} onClick={onAdvance} type="button">
+            {more ? "Câu tiếp theo" : "Xem người chiến thắng"}
+          </button>
+        )}
       </div>
       <RankingList playerId={playerId} ranking={session.ranking} />
     </section>
@@ -440,6 +866,7 @@ function ScoreboardPanel({
 }
 
 function WinnerPanel({
+  actor,
   departments,
   leaderboard,
   onDepartment,
@@ -448,6 +875,7 @@ function WinnerPanel({
   selectedDepartment,
   session
 }: {
+  actor: Actor;
   departments: string[];
   leaderboard: LeaderboardRow[];
   onDepartment: (department: string) => void;
@@ -463,9 +891,9 @@ function WinnerPanel({
     <div className="twoColumn gameWinner">
       <section className="panel">
         <p className="eyebrow">Winner ceremony</p>
-        <h2>{winner?.player.displayName} thắng phiên này</h2>
+        <h2>{winner?.player.displayName ?? "Cả đội"} thắng phiên này</h2>
         <p className="lessonLead">
-          {winner?.score.total} điểm - {winner?.player.department}
+          {winner?.score.total ?? 0} điểm - {winner?.player.department ?? session.hostDepartment}
         </p>
         <div className="gamePodium">
           {podium.map((row, index) => (
@@ -476,9 +904,11 @@ function WinnerPanel({
             </div>
           ))}
         </div>
-        <button className="secondaryButton full" onClick={onReplay} type="button">
-          Tạo phiên mới
-        </button>
+        {actor === "manager" && (
+          <button className="secondaryButton full" onClick={onReplay} type="button">
+            Tạo phòng mới
+          </button>
+        )}
       </section>
       <section className="panel">
         <div className="panelHeader">
@@ -529,7 +959,9 @@ function LeaderboardList({ leaderboard, playerId }: { leaderboard: LeaderboardRo
           <strong>{row.avatar}</strong>
           <div>
             <b>{row.displayName}</b>
-            <small>{row.department} - {row.gamesPlayed} phiên</small>
+            <small>
+              {row.department} - {row.gamesPlayed} phiên
+            </small>
           </div>
           <strong>{row.totalPoints}</strong>
         </div>
