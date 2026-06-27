@@ -3,10 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "npm run dev --prefix apps/web",
-    "build": "npm run build --prefix apps/web",
-    "start": "npm run start --prefix apps/web",
-    "lint": "npm run lint --prefix apps/web",
-    "install:web": "npm install --prefix apps/web"
+    "dev": "npm run dev --prefix src/frontend",
+    "build": "npm run build --prefix src/frontend",
+    "start": "npm run start --prefix src/frontend",
+    "lint": "npm run lint --prefix src/frontend",
+    "install:web": "npm install --prefix src/frontend"
   }
 }
