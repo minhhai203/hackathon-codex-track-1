@@ -3,6 +3,7 @@
 import { GameState } from "@/lib/game/types";
 import { currentQuestion } from "@/lib/game/engine";
 import { optionStyle } from "./optionStyles";
+import { AutoAdvanceHint } from "./AutoAdvanceHint";
 
 export function Reveal({
   state,
@@ -89,6 +90,7 @@ export function Reveal({
       >
         Xem bảng xếp hạng →
       </button>
+      <AutoAdvanceHint />
     </div>
   );
 }

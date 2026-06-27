@@ -17,6 +17,9 @@ import { GameState, Player, Question, ScoringConfig, DEFAULT_SCORING } from "./t
 
 export type Unsubscribe = () => void;
 
+/** Thời gian tự động chuyển tiếp ở màn reveal/scoreboard (ms). */
+export const AUTO_ADVANCE_MS = 8000;
+
 export interface GameController {
   /** Trạng thái hiện tại (snapshot). */
   getState(): GameState;
@@ -47,6 +50,7 @@ export class MockGameController implements GameController {
   private state: GameState;
   private listeners = new Set<(s: GameState) => void>();
   private timers: ReturnType<typeof setTimeout>[] = [];
+  private autoTimer: ReturnType<typeof setTimeout> | null = null;
   private readonly opts: Required<MockOptions>;
 
   constructor(players: Player[], questions: Question[], opts: MockOptions) {
@@ -76,6 +80,17 @@ export class MockGameController implements GameController {
   private clearTimers() {
     this.timers.forEach(clearTimeout);
     this.timers = [];
+  }
+
+  private clearAuto() {
+    if (this.autoTimer) clearTimeout(this.autoTimer);
+    this.autoTimer = null;
+  }
+
+  /** Lên lịch tự động bấm next sau AUTO_ADVANCE_MS. */
+  private scheduleAuto() {
+    this.clearAuto();
+    this.autoTimer = setTimeout(() => this.next(), AUTO_ADVANCE_MS);
   }
 
   startGame() {
@@ -127,6 +142,8 @@ export class MockGameController implements GameController {
     if (this.state.phase !== "question") return;
     this.clearTimers();
     this.set(endQuestion(this.state, this.opts.scoring));
+    // Hết giờ -> tự động sang scoreboard sau 8s (người chơi vẫn bấm next được).
+    this.scheduleAuto();
   }
 
   submitAnswer(playerId: string, selectedIndex: number) {
@@ -136,8 +153,12 @@ export class MockGameController implements GameController {
   }
 
   next() {
+    // Bấm tay hoặc auto đều đi qua đây: hủy auto-timer đang chờ.
+    this.clearAuto();
     if (this.state.phase === "reveal") {
       this.set(toScoreboard(this.state));
+      // Tự động sang câu kế / kết thúc sau 8s.
+      this.scheduleAuto();
       return;
     }
     if (this.state.phase === "scoreboard") {
@@ -169,6 +190,7 @@ export class MockGameController implements GameController {
 
   dispose() {
     this.clearTimers();
+    this.clearAuto();
     this.listeners.clear();
   }
 }

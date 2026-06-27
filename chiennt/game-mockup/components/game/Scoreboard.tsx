@@ -2,6 +2,7 @@
 
 import { GameState } from "@/lib/game/types";
 import { hasNextQuestion } from "@/lib/game/engine";
+import { AutoAdvanceHint } from "./AutoAdvanceHint";
 
 export function Scoreboard({
   state,
@@ -56,6 +57,9 @@ export function Scoreboard({
       >
         {more ? "Câu tiếp theo →" : "Xem người chiến thắng 🎊"}
       </button>
+      <div className="text-center">
+        <AutoAdvanceHint />
+      </div>
     </div>
   );
 }
