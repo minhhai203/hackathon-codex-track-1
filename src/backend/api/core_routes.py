@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Query
 
-from src.models.schemas import (
+from src.backend.models.schemas import (
     AssessmentRequest,
     AssessmentResponse,
     CoreCapabilitiesResponse,
@@ -14,7 +14,7 @@ from src.models.schemas import (
     ProgressSummaryRequest,
     ProgressSummaryResponse,
 )
-from src.services.core import (
+from src.backend.services.core import (
     get_capabilities,
     recommend_learning_path,
     recommend_next_route,

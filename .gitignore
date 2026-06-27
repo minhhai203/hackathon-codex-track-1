@@ -50,7 +50,11 @@ node_modules/
 .next/
 out/
 .nuxt/
+.playwright-cli/
+tsconfig.tsbuildinfo
 
 # Build
 *.pyc
 *.pyo
+.vercel
+.env*

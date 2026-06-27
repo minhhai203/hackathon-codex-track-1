@@ -1,10 +1,10 @@
-from src.models.schemas import (
+from src.backend.models.schemas import (
     AssessmentRequest,
     LearningPathRequest,
     ManagerSummaryRequest,
     ProgressSummaryRequest,
 )
-from src.services.core import (
+from src.backend.services.core import (
     recommend_learning_path,
     score_assessment,
     summarize_manager,

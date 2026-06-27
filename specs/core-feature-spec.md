@@ -1,7 +1,7 @@
 # Core Feature Spec
 
 > Source: `ai-tro-ly/.repomix/repomix-latest.xml`
-> Target repo stack: Next.js, Supabase, LangGraph, LangChain, RAGAS.
+> Target repo stack: Next.js, Supabase, Vercel, LangGraph, LangChain, RAGAS.
 > Purpose: define the feature frame so multiple agents and teammates can build in parallel.
 
 ## 1. Product Frame
@@ -24,9 +24,9 @@ UI and exact flows will be redesigned later. This spec focuses on capability bou
 ## 2. Target Architecture
 
 ```text
-apps/
-├── web/                       # Next.js app, UI, route handlers, auth shell
-└── agent/                     # LangGraph/LangChain service for tutor, recommender, grader
+src/
+├── frontend/                  # Next.js app, UI, route handlers, auth shell
+└── backend/                   # LangGraph/LangChain service for tutor, recommender, grader
 
 supabase/
 ├── migrations/                # Postgres schema, RLS, functions, seed data
@@ -44,6 +44,7 @@ eval/
 |---|---|
 | Next.js | Auth shell, route handlers, user-facing API contract, thin orchestration, feature flags |
 | Supabase | Auth, tenant-scoped Postgres, RLS, storage, audit tables, invite and membership state |
+| Vercel | Next.js preview and production deployment |
 | LangGraph | Stateful agent workflows: tutor, path recommender, grader, manager analytics assistant |
 | LangChain | Model calls, tools, retrievers, prompt templates, structured output parsing |
 | RAGAS | Offline quality checks for retrieval and answer faithfulness |
@@ -376,8 +377,8 @@ Use stable IDs in docs, branch names, issues, migrations, and tests:
 ### Feature Folder Ownership
 
 ```text
-apps/web/features/<feature-slug>/
-apps/agent/src/<feature-slug>/
+src/frontend/features/<feature-slug>/
+src/backend/<feature-slug>/
 supabase/migrations/<timestamp>_<feature_slug>.sql
 eval/datasets/<feature-slug>/
 eval/reports/<feature-slug>/

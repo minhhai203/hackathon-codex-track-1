@@ -1,7 +1,16 @@
-.PHONY: run test lint format check clean
+.PHONY: run web web-build web-lint test lint format check clean
 
 run:
-	uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+	uvicorn src.backend.main:app --reload --host 0.0.0.0 --port 8000
+
+web:
+	cd src/frontend && npm run dev
+
+web-build:
+	cd src/frontend && npm run build
+
+web-lint:
+	cd src/frontend && npm run lint
 
 test:
 	pytest tests/ -v

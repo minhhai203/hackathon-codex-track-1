@@ -2,90 +2,102 @@
 
 ## System Overview
 
-Codex Hackathon Agent is a small FastAPI service around a LangGraph workflow. The current graph is deterministic so the prototype can run during development without external API keys, while leaving clear extension points for LLM calls, tools, data stores, and a frontend.
+The current product demo is a Next.js application under `src/frontend`. The UI and product-facing demo API routes run in the same Next.js app so the Vercel deployment can serve the prototype without calling the Python backend.
+
+Supabase is the intended source of truth for auth, organization-scoped data, RLS, and storage. The current route handlers use deterministic demo logic in `src/frontend/lib/demo-core.ts` until the Supabase-backed F01/F02 slices are implemented.
+
+The Python code under `src/backend` remains the LangGraph/LangChain agent skeleton for future tutor, recommender, grader, and analytics workflows. It is not in the active UI request path yet.
 
 ## Architecture Diagram
 
 ```mermaid
 graph TB
     subgraph Client
-        UI[Browser, CLI, or future UI]
+        UI[Browser]
     end
 
-    subgraph Backend[FastAPI Backend]
-        API[API Routes]
-        Agent[LangGraph Agent]
-        LLM[Optional LLM Service]
-        Tools[Optional Agent Tools]
+    subgraph Vercel[Next.js on Vercel]
+        App[src/frontend app]
+        API[Next.js API routes /api/v1]
+        Demo[Deterministic demo-core service]
+        SupaClient[Supabase client helper]
     end
 
-    subgraph Data[Future Data Layer]
-        DB[(Database)]
-        Vector[Vector Store]
+    subgraph Supabase[Supabase]
+        Auth[Auth]
+        DB[(Postgres + RLS)]
+        Storage[Storage]
     end
 
-    UI -->|HTTP/REST| API
-    API --> Agent
-    Agent -. future .-> LLM
-    Agent -. future .-> Tools
-    Agent -. future .-> Vector
-    Tools -. future .-> DB
+    subgraph Agent[Optional Python agent service]
+        Graph[LangGraph workflows]
+        LLM[LangChain / LLM providers]
+        RAG[RAG tools]
+    end
+
+    UI --> App
+    App --> API
+    API --> Demo
+    API -. next data slice .-> SupaClient
+    SupaClient -. planned .-> Auth
+    SupaClient -. planned .-> DB
+    SupaClient -. planned .-> Storage
+    API -. future agent call .-> Graph
+    Graph -. future .-> LLM
+    Graph -. future .-> RAG
+    RAG -. future .-> DB
 ```
 
 ## Components
 
-### Client
+### Frontend
 
-The first client can be Swagger UI, curl, or a later frontend. The backend contract is stable enough to build UI against `/api/v1/chat`.
+- Location: `src/frontend`
+- Framework: Next.js App Router
+- Deployment target: Vercel
+- Current UI surfaces: onboarding assessment, learning path, lesson player, AI tutor, progress view, manager dashboard
 
-### Backend
+### Next.js API
 
-FastAPI owns request validation, CORS, health checks, and route composition.
+Next.js route handlers own the current product-facing API contract:
 
-### Agent
+- `POST /api/v1/chat`
+- `GET /api/v1/core/capabilities`
+- `POST /api/v1/core/assessment`
+- `POST /api/v1/core/learning-path`
+- `POST /api/v1/core/progress`
+- `POST /api/v1/core/manager`
+- `GET /api/v1/core/knowledge`
 
-- Agent type: lightweight planning workflow
-- State: `query`, `context`, `intent`, `analysis`, `response`, `action_items`, `error`
-- Nodes: `analyze`, `respond`
-- Tools: calculator and placeholder knowledge-search tools are available for future graph expansion
+### Supabase
 
-```mermaid
-graph LR
-    START --> A[Analyze brief]
-    A --> B{Has error?}
-    B -->|No| C[Build response]
-    B -->|Yes| D[Stop]
-    C --> END
-    D --> END
-```
+Supabase is the primary data/auth/storage layer for the product roadmap. Current frontend code includes a guarded Supabase browser client helper in `src/frontend/lib/supabase.ts`; route handlers will switch from deterministic demo logic to tenant-scoped Supabase reads/writes as F01/F02 land.
 
-### Database
+### Python Agent Service
 
-No database is required for the current prototype. `DATABASE_URL` defaults to SQLite so persistence can be added without reshaping config.
-
-### LLM Service
-
-`src/services/llm.py` creates a ChatOpenAI client only when `OPENAI_API_KEY` is configured. This keeps local tests and demos predictable.
+`src/backend` contains the optional LangGraph/LangChain backend skeleton. It should be treated as an agent service boundary, not the default UI API path.
 
 ## Data Flow
 
-1. Client sends a product brief to `/api/v1/chat`.
-2. FastAPI validates `ChatRequest`.
-3. LangGraph detects intent and builds a response/action plan.
-4. API returns `ChatResponse` with `response`, `intent`, `action_items`, and `analysis`.
+1. User opens the Vercel-hosted Next.js app.
+2. Client components call same-origin `/api/v1/*` route handlers.
+3. Route handlers return deterministic demo results from `demo-core` today.
+4. Future slices replace demo reads/writes with Supabase-backed tenant data.
+5. Future AI-heavy flows can call `src/backend` agent services explicitly.
 
 ## Security
 
-- API keys stay in `.env`, which is ignored by git.
-- Pydantic validates request payloads.
-- CORS origins are controlled through `CORS_ORIGINS`.
-- LLM-backed features fail fast when the API key is missing.
+- Public Supabase access uses `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+- Tenant safety must be enforced with Supabase RLS before real organization data is used.
+- Server-only secrets stay in Vercel or local `.env` files, never in browser-exposed variables.
+- Agent/LLM flows should remain behind server route handlers and must not run directly in client components.
 
 ## Design Decisions
 
 | Decision | Choice | Reason |
 |----------|--------|--------|
-| Framework | FastAPI | Async, auto-docs, type-safe |
-| Agent | LangGraph | Explicit state and node boundaries |
-| Default mode | Deterministic | Works during hackathon setup without secrets |
-| Database | None yet | Keep the first demo loop small |
+| Primary UI runtime | Next.js on Vercel | Simplest path for UI, route handlers, previews, and production deploy |
+| Data/auth layer | Supabase | Managed Postgres, auth, storage, RLS, and tenant isolation |
+| Current demo API | Next.js route handlers | Keeps the UI runnable without Python backend coupling |
+| Agent boundary | `src/backend` LangGraph service | Preserves room for tutor/recommender/grader workflows when needed |
+| Default mode | Deterministic demo logic | Works during hackathon setup without secrets |
