@@ -1003,7 +1003,7 @@ function AnimatedWords({ text }: { text: string }) {
     <>
       {text.split(" ").map((word, index) => (
         <span className="gameWord" key={`${word}-${index}`} style={{ animationDelay: `${index * 35}ms` }}>
-          {word}{" "}
+          {word}
         </span>
       ))}
     </>

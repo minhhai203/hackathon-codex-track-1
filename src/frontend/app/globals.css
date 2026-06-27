@@ -956,6 +956,7 @@ td {
 .gameWord {
   animation: letterReveal 0.38s ease-out both;
   display: inline-block;
+  margin-inline-end: 0.24em;
 }
 
 .gameCountdown {
