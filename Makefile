@@ -1,16 +1,18 @@
-.PHONY: run web web-build web-lint test lint format check clean
+.PHONY: run web web-build web-lint test lint format check check-web clean
 
 run:
 	uvicorn src.backend.main:app --reload --host 0.0.0.0 --port 8000
 
 web:
-	cd src/frontend && npm run dev
+	npm run dev --prefix apps/web
 
 web-build:
-	cd src/frontend && npm run build
+	npm run build --prefix apps/web
 
 web-lint:
-	cd src/frontend && npm run lint
+	npm run lint --prefix apps/web
+
+check-web: web-lint
 
 test:
 	pytest tests/ -v
@@ -21,9 +23,10 @@ lint:
 format:
 	ruff format src/ tests/
 
-check: lint test
+check: lint test web-lint
 
 clean:
 	find . -type d -name __pycache__ -exec rm -rf {} +
 	find . -type d -name .pytest_cache -exec rm -rf {} +
 	find . -type d -name .ruff_cache -exec rm -rf {} +
+	find . -type d -name .next -exec rm -rf {} +
