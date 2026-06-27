@@ -35,6 +35,7 @@ The target stack for this project is a small monorepo built around `Next.js`, `S
 ├── docs/                 # Architecture notes and product docs
 ├── eval/                 # RAGAS datasets, reports, benchmark outputs
 ├── presentation/         # Demo and pitch assets
+├── supabase/             # Core Postgres schema and RLS scaffolding
 ├── scripts/              # Local setup utilities
 ├── Dockerfile
 ├── docker-compose.yml
@@ -134,6 +135,30 @@ curl -X POST http://localhost:8000/api/v1/chat \
 ```
 
 The current agent is deterministic and works without an API key. Add `OPENAI_API_KEY` in `.env` only when LLM-backed features are added.
+
+Core endpoints available now:
+
+```bash
+curl http://localhost:8000/api/v1/core/capabilities
+
+curl -X POST http://localhost:8000/api/v1/core/assessment \
+  -H "Content-Type: application/json" \
+  -d '{"role_id":"marketing","department":"Marketing","employee_name":"An","current_work":"Planning campaign briefs","ai_tool_experience":4,"prompt_confidence":4,"safety_awareness":3,"daily_tasks":["Write briefs"],"goals":["faster content planning"],"preferred_address":"chi"}'
+
+curl -X POST http://localhost:8000/api/v1/core/learning-path \
+  -H "Content-Type: application/json" \
+  -d '{"role_id":"kinh-doanh","ai_level":2,"goals":["find first customer"],"completed_modules":["foundation-ai-safety"]}'
+
+curl -X POST http://localhost:8000/api/v1/core/progress \
+  -H "Content-Type: application/json" \
+  -d '{"employee_name":"Binh","role_id":"kinh-doanh","completed_modules":["foundation-ai-safety","foundation-prompt-basics"],"hours_saved":8,"recent_activity":["Completed notes"]}'
+
+curl -X POST http://localhost:8000/api/v1/core/manager \
+  -H "Content-Type: application/json" \
+  -d '{"organization_name":"Demo Org","team":[]}'
+
+curl "http://localhost:8000/api/v1/core/knowledge?query=RAG%20grounding"
+```
 
 ## Development
 
