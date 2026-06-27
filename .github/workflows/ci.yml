@@ -11,10 +11,6 @@ jobs:
   python-check:
     name: Python — Lint & Test (agent prototype)
     runs-on: ubuntu-latest
-    # Chỉ chạy khi có thay đổi trong thư mục src/ hoặc tests/
-    if: |
-      contains(github.event.pull_request.changed_files, 'src/') ||
-      contains(github.event.pull_request.changed_files, 'tests/')
 
     steps:
       - uses: actions/checkout@v4
