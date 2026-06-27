@@ -1,0 +1,250 @@
+# Codex Hackathon Track 1 - LLM Grading Context
+
+## Project
+
+Name: AI Tro Ly Doanh Nghiep
+
+Track: Track 1 - Market Scale
+
+Repository: hackathon-codex-track-1
+
+One-line summary: A role-specific AI learning platform for Vietnamese SMEs that assesses employee AI capability, recommends practical learning paths, supports an AI tutor, and gives managers a dashboard for team learning progress.
+
+## What The Product Does
+
+The product helps SME employees learn useful AI workflows for their actual job roles:
+
+- Onboarding assessment scores AI maturity from 0 to 5.
+- Learning path recommendation selects foundation modules plus role-specific modules.
+- Lesson player shows current module content and practice submission area.
+- AI tutor answers in the context of the current learning path.
+- Progress screen summarizes completed modules, next modules, and saved hours.
+- Manager dashboard shows team-level completion, risk signals, department coverage, and learner follow-up tasks.
+
+Primary first customer: Vietnamese SME owners/managers who want practical AI adoption across departments without building an internal academy from scratch.
+
+Primary user roles:
+
+- Owner/admin: operates company learning rollout.
+- Manager: tracks team progress and support needs.
+- Employee: takes assessment, follows modules, practices AI workflows.
+
+## Market Thesis
+
+SMEs want AI adoption, but generic AI courses do not map to daily work. The wedge is practical role-specific learning for departments such as marketing, sales, accounting, operations, and HR, plus manager evidence about adoption progress.
+
+Differentiation:
+
+- Not a generic chatbot wrapper.
+- The core unit is a role-specific learning path tied to work outcomes.
+- Managers get progress and risk signals, not just individual course completion.
+- The system can expand from learning path recommendation to internal AI enablement operations: assignments, grading, review queue, and usage ledger.
+
+## Current Implementation
+
+Frontend:
+
+- Next.js App Router under `src/frontend`.
+- Main UI entry: `src/frontend/app/page.tsx`.
+- Workspace UI components: `src/frontend/components/workspace-screens.tsx`.
+- Shared UI primitives: `src/frontend/components/ui-primitives.tsx`.
+- Frontend state/data/types/helpers:
+  - `src/frontend/lib/workspace-data.ts`
+  - `src/frontend/lib/workspace-types.ts`
+  - `src/frontend/lib/workspace-display.ts`
+  - `src/frontend/lib/http.ts`
+
+API routes:
+
+- `GET /api/v1/core/capabilities`
+- `POST /api/v1/core/assessment`
+- `POST /api/v1/core/learning-path`
+- `POST /api/v1/core/progress`
+- `POST /api/v1/core/manager`
+- `GET /api/v1/core/knowledge?query=...`
+- `POST /api/v1/chat`
+
+Supabase:
+
+- Core schema: `supabase/migrations/20260627000100_core_platform.sql`
+- Demo seed data: `supabase/seed.sql`
+- Seed includes:
+  - one demo organization
+  - two admin/operator accounts
+  - five employee test accounts
+  - profiles
+  - learning modules
+  - learning paths
+  - assessment results
+  - progress records
+  - chat conversations/messages
+  - practice submissions
+  - grading results
+  - reflections
+  - time logs
+  - AI usage ledger
+
+Learning path data:
+
+- `POST /api/v1/core/learning-path` is Supabase-first.
+- It reads active rows from `public.learning_modules`.
+- It returns `source: "supabase"` when Supabase is configured and seeded.
+- It falls back to deterministic demo catalog if Supabase env/data is unavailable.
+
+Backend:
+
+- Python FastAPI/LangGraph skeleton under `src/backend`.
+- Tests cover core deterministic services and API routes.
+- Current product-facing UI uses Next.js API routes for the demo loop.
+
+## Demo Accounts
+
+All seeded accounts use password: `Demo@2026!`
+
+Admin/operator accounts:
+
+- `admin.nam@demo.local`
+- `admin.ha@demo.local`
+
+Employee test accounts:
+
+- `an.le@demo.local`
+- `bao.pham@demo.local`
+- `chi.do@demo.local`
+- `dung.vo@demo.local`
+- `mai.nguyen@demo.local`
+
+## How To Run
+
+Install frontend dependencies:
+
+```bash
+npm install --prefix src/frontend
+```
+
+Run frontend:
+
+```bash
+npm run dev --prefix src/frontend
+```
+
+Run frontend through root package scripts:
+
+```bash
+npm run dev
+```
+
+Run Python backend/API skeleton:
+
+```bash
+python3.11 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+make run
+```
+
+Seed Supabase:
+
+```bash
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/seed.sql
+```
+
+## Verification Commands
+
+Frontend typecheck:
+
+```bash
+npm run lint --prefix src/frontend
+```
+
+Frontend production build:
+
+```bash
+npm run build --prefix src/frontend
+```
+
+Python tests:
+
+```bash
+pytest -q
+```
+
+Recent verification result:
+
+- `npm run lint --prefix src/frontend`: passed.
+- `npm run build --prefix src/frontend`: passed.
+- `pytest -q`: 15 tests passed.
+
+## Useful Manual API Checks
+
+Learning path:
+
+```bash
+curl -X POST http://localhost:3000/api/v1/core/learning-path \
+  -H "Content-Type: application/json" \
+  -d '{"role_id":"marketing","ai_level":2,"goals":["build campaign briefs"],"completed_modules":["foundation-ai-safety"]}'
+```
+
+Expected when Supabase is configured and seeded:
+
+- response includes modules from `learning_modules`
+- response includes `"source":"supabase"`
+
+Chat learning path:
+
+```bash
+curl -X POST http://localhost:3000/api/v1/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message":"Tao lo trinh module cho marketing","context":"Learner department: Marketing"}'
+```
+
+Expected:
+
+- response intent is `learning_path`
+- response includes a generated path
+- `action_items` should be empty for this path flow because the route now builds the path directly
+
+Assessment:
+
+```bash
+curl -X POST http://localhost:3000/api/v1/core/assessment \
+  -H "Content-Type: application/json" \
+  -d '{"role_id":"marketing","department":"Marketing","employee_name":"An","current_work":"Planning campaign briefs","ai_tool_experience":4,"prompt_confidence":4,"safety_awareness":3,"daily_tasks":["Write briefs"],"goals":["faster content planning"],"preferred_address":"chi"}'
+```
+
+## Rubric Alignment
+
+Rubric Question 1: Does it work?
+
+- The app builds and tests pass.
+- The main demo UI runs in Next.js.
+- The learning-path route reads real Supabase module data when configured.
+- Several supporting screens still use deterministic demo snapshots for hackathon speed.
+
+Rubric Question 2: Market Scale
+
+- The market is SME AI adoption and internal enablement.
+- First customer is a Vietnamese SME owner/manager rolling out AI usage by department.
+- Expansion path: onboarding assessment, role-specific modules, assignments, practice grading, manager analytics, usage ledger.
+
+Rubric Question 3: Vibe Check
+
+- The demo is designed as a polished operator workspace, not a landing page.
+- The strongest demo path is: assessment -> learning path -> lesson -> tutor -> manager overview.
+
+## Known Limitations
+
+- Authentication UI and protected admin navigation are not fully implemented yet.
+- Manager/progress/knowledge routes still use deterministic demo logic.
+- Assessment currently scores and returns results but does not persist through the Next.js route.
+- Python LangGraph backend is scaffolded and tested, but the main UI demo currently uses Next.js API route handlers.
+
+## Recommended Demo Script
+
+1. Open the workspace UI.
+2. Show the manager overview and explain the SME training operations problem.
+3. Run onboarding assessment for a Marketing employee.
+4. Show the recommended learning path.
+5. Ask the tutor for a role-specific learning path or module explanation.
+6. Open the manager dashboard to show team adoption evidence.
+7. Mention Supabase seed/schema and the expansion path toward real customer deployment.

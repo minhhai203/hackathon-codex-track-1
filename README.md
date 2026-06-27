@@ -105,8 +105,10 @@ The Python code under `src/backend` is the LangGraph/LangChain backend skeleton.
 - AI tutor chat backed by the Next.js route handler `/api/v1/chat`
 - progress summary backed by `/api/v1/core/progress`
 - manager dashboard backed by `/api/v1/core/manager`
+- engagement game backed by `/api/v1/game/*` route handlers, with deterministic scoring and an in-memory MVP session store
 
 The frontend uses same-origin Next.js API routes first. Those route handlers currently use deterministic demo logic in `src/frontend/lib/demo-core.ts`; Supabase becomes the source of truth when the F01/F02 data slices are implemented.
+F09 game data is scaffolded in `supabase/migrations/20260627000200_game_engagement.sql`; the MVP runtime uses Next.js route handlers before the later WebSocket/Supabase-backed upgrade.
 
 ## Quick Start
 
@@ -162,6 +164,10 @@ curl -X POST http://localhost:3000/api/v1/core/manager \
   -d '{"organization_name":"Demo Org","team":[]}'
 
 curl "http://localhost:3000/api/v1/core/knowledge?query=RAG%20grounding"
+
+curl -X POST http://localhost:3000/api/v1/game/sessions
+
+curl "http://localhost:3000/api/v1/game/leaderboard?department=Marketing"
 ```
 
 ## Optional Python Agent API

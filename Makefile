@@ -4,13 +4,13 @@ run:
 	uvicorn src.backend.main:app --reload --host 0.0.0.0 --port 8000
 
 web:
-	npm run dev --prefix apps/web
+	npm run dev --prefix src/frontend
 
 web-build:
-	npm run build --prefix apps/web
+	npm run build --prefix src/frontend
 
 web-lint:
-	npm run lint --prefix apps/web
+	npm run lint --prefix src/frontend
 
 check-web: web-lint
 
