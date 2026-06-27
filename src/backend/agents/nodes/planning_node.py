@@ -1,4 +1,4 @@
-from src.agents.state import AgentState
+from src.backend.agents.state import AgentState
 
 
 def _detect_intent(text: str) -> str:

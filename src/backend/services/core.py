@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import Counter
 from dataclasses import asdict
 
-from src.models.schemas import (
+from src.backend.models.schemas import (
     AssessmentRequest,
     AssessmentResponse,
     CoreCapabilitiesResponse,
@@ -16,7 +16,13 @@ from src.models.schemas import (
     ProgressSummaryRequest,
     ProgressSummaryResponse,
 )
-from src.services.demo_catalog import DEMO_TEAM, LearningModule, get_common_modules, get_modules, get_role_modules
+from src.backend.services.demo_catalog import (
+    DEMO_TEAM,
+    LearningModule,
+    get_common_modules,
+    get_modules,
+    get_role_modules,
+)
 
 
 def _normalize(text: str) -> str:

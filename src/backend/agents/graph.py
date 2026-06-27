@@ -1,7 +1,7 @@
 from langgraph.graph import END, StateGraph
 
-from src.agents.nodes.planning_node import analyze_node, respond_node
-from src.agents.state import AgentState
+from src.backend.agents.nodes.planning_node import analyze_node, respond_node
+from src.backend.agents.state import AgentState
 
 
 def should_continue(state: AgentState) -> str:
