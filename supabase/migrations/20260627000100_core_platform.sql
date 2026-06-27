@@ -1,18 +1,5 @@
 create extension if not exists pgcrypto;
 
-create or replace function public.is_org_member(org_id uuid)
-returns boolean
-language sql
-stable
-as $$
-  select exists (
-    select 1
-    from public.organization_members m
-    where m.organization_id = org_id
-      and m.user_id = auth.uid()
-  )
-$$;
-
 create table if not exists public.organizations (
   id uuid primary key default gen_random_uuid(),
   name text not null,
@@ -178,6 +165,20 @@ alter table public.grading_results enable row level security;
 alter table public.reflections enable row level security;
 alter table public.time_logs enable row level security;
 alter table public.ai_usage_ledger enable row level security;
+
+-- Function defined here (after tables exist) to avoid "relation does not exist" error.
+create or replace function public.is_org_member(org_id uuid)
+returns boolean
+language sql
+stable
+as $$
+  select exists (
+    select 1
+    from public.organization_members m
+    where m.organization_id = org_id
+      and m.user_id = auth.uid()
+  )
+$$;
 
 create policy organizations_select_own
 on public.organizations
