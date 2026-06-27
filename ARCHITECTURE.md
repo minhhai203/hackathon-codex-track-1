@@ -5,6 +5,7 @@
 The current product demo is a Next.js application under `src/frontend`. The UI and product-facing demo API routes run in the same Next.js app so the Vercel deployment can serve the prototype without calling the Python backend.
 
 Supabase is the intended source of truth for auth, organization-scoped data, RLS, and storage. The current route handlers use deterministic demo logic in `src/frontend/lib/demo-core.ts` until the Supabase-backed F01/F02 slices are implemented.
+The F09 engagement game follows the same MVP approach: game UI, route handlers, and deterministic scoring live in `src/frontend`; Supabase schema/RLS are prepared as migrations for the DB-backed phase.
 
 The Python code under `src/backend` remains the LangGraph/LangChain agent skeleton for future tutor, recommender, grader, and analytics workflows. It is not in the active UI request path yet.
 
@@ -55,7 +56,7 @@ graph TB
 - Location: `src/frontend`
 - Framework: Next.js App Router
 - Deployment target: Vercel
-- Current UI surfaces: onboarding assessment, learning path, lesson player, AI tutor, progress view, manager dashboard
+- Current UI surfaces: onboarding assessment, learning path, lesson player, AI tutor, progress view, manager dashboard, engagement game
 
 ### Next.js API
 
@@ -68,10 +69,17 @@ Next.js route handlers own the current product-facing API contract:
 - `POST /api/v1/core/progress`
 - `POST /api/v1/core/manager`
 - `GET /api/v1/core/knowledge`
+- `POST /api/v1/game/sessions`
+- `GET /api/v1/game/sessions/[sessionId]`
+- `POST /api/v1/game/sessions/[sessionId]/join`
+- `POST /api/v1/game/sessions/[sessionId]/start`
+- `POST /api/v1/game/sessions/[sessionId]/answer`
+- `POST /api/v1/game/sessions/[sessionId]/next`
+- `GET /api/v1/game/leaderboard`
 
 ### Supabase
 
-Supabase is the primary data/auth/storage layer for the product roadmap. Current frontend code includes a guarded Supabase browser client helper in `src/frontend/lib/supabase.ts`; route handlers will switch from deterministic demo logic to tenant-scoped Supabase reads/writes as F01/F02 land.
+Supabase is the primary data/auth/storage layer for the product roadmap. Current frontend code includes a guarded Supabase browser client helper in `src/frontend/lib/supabase.ts`; route handlers will switch from deterministic demo logic to tenant-scoped Supabase reads/writes as F01/F02 land. F09 game tables, RLS policies, and seed questions are defined in `supabase/migrations/20260627000200_game_engagement.sql`.
 
 ### Python Agent Service
 
@@ -99,5 +107,6 @@ Supabase is the primary data/auth/storage layer for the product roadmap. Current
 | Primary UI runtime | Next.js on Vercel | Simplest path for UI, route handlers, previews, and production deploy |
 | Data/auth layer | Supabase | Managed Postgres, auth, storage, RLS, and tenant isolation |
 | Current demo API | Next.js route handlers | Keeps the UI runnable without Python backend coupling |
+| F09 game MVP runtime | Next.js route handlers + in-memory store | Demoable in the current Vercel-oriented app before WebSocket/Supabase runtime |
 | Agent boundary | `src/backend` LangGraph service | Preserves room for tutor/recommender/grader workflows when needed |
 | Default mode | Deterministic demo logic | Works during hackathon setup without secrets |

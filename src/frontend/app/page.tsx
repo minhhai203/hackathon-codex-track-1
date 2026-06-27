@@ -1,8 +1,9 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { GameScreen } from "@/components/game/GameScreen";
 
-type Section = "learn" | "player" | "tutor" | "progress" | "manager";
+type Section = "learn" | "player" | "tutor" | "progress" | "manager" | "game";
 
 type Module = {
   module_id: string;
@@ -72,7 +73,8 @@ const sectionLinks: Array<[Section, string]> = [
   ["player", "Bài học"],
   ["tutor", "Trợ lý"],
   ["progress", "Tiến bộ"],
-  ["manager", "Quản lý"]
+  ["manager", "Quản lý"],
+  ["game", "Game"]
 ];
 
 const sectionIds = sectionLinks.map(([id]) => id);
@@ -490,6 +492,7 @@ export default function Home() {
         )}
         {section === "progress" && <ProgressScreen progress={progress} />}
         {section === "manager" && <ManagerScreen manager={manager} />}
+        {section === "game" && <GameScreen />}
       </section>
     </main>
   );
