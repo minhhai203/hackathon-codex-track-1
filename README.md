@@ -91,6 +91,12 @@ Restart Codex after the install so the new skills are loaded.
 - `supabase`: source of truth for users, projects, uploads, and any structured product data
 - `eval`: RAGAS datasets and reports to validate retrieval quality before demo day
 
+## Feature Planning
+
+- Core feature spec: `specs/core-feature-spec.md`
+- Delivery plan: `planning/core-feature-plan.md`
+- Source inspiration: `ai-tro-ly/.repomix/repomix-latest.xml`, adapted to this repo's Next.js + Supabase + LangGraph + LangChain + RAGAS stack.
+
 ## Current Backend Service
 
 The code already in this repo runs the backend agent skeleton. The monorepo layout above is the target structure for the Next.js + Supabase build-out.
